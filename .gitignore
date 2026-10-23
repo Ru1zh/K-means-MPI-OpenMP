@@ -1,0 +1,50 @@
+# Build outputs
+/build/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# Generated data, measurements, and local working notes
+/data/
+/datasets/
+/results/
+/outputs/
+/artifacts/
+/docs/
+*.jsonl
+*.csv
+*.tsv
+*.log
+*.o[0-9]*
+*.e[0-9]*
+
+# Python environments and caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Local credentials and private configuration
+.env
+.env.*
+!.env.example
+.aws/
+.ssh/
+kaggle.json
+credentials.json
+*.pem
+*.key
+*.p12
+
+# Operating system, editor, and temporary files
+.DS_Store
+._*
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

@@ -1,0 +1,161 @@
+# Lloyd K-means with MPI + OpenMP
+
+English | [简体中文](README.zh-CN.md)
+
+C++17 implementations of Lloyd K-means for comparing process and thread parallelism. Includes a serial reference, MPI/OpenMP variants, numerical tests, and benchmark scripts. The clustering algorithm is implemented directly without a clustering library.
+
+| Variant | Local accumulation | Purpose |
+| --- | --- | --- |
+| V0 | Serial | Numerical reference and single-core baseline |
+| V1 | Serial within each MPI process | Pure MPI baseline |
+| V2 | OpenMP shared atomic updates | Measure contention |
+| V3 | OpenMP thread-private buffers, then merge | Reduce synchronization inside the sample loop |
+
+The parallel executable supports Allreduce and Reduce + Bcast for global centroid updates.
+
+## Build
+
+Requirements: a C++17 compiler and Make; MPI-3+ and OpenMP for the parallel executable; Python 3.9+ for tests and scripts. Python scripts use only the standard library.
+
+On Linux/HPC, load matching compiler and MPI modules, then run:
+
+```sh
+make all CXX=g++ MPICXX=mpicxx
+```
+
+Use `make serial` for a serial-only build. On macOS with Apple Clang, Homebrew Open MPI, and libomp:
+
+```sh
+make all CXX=clang++ MPICXX="$(brew --prefix open-mpi)/bin/mpicxx" \
+  OMPFLAGS="-Xpreprocessor -fopenmp -I$(brew --prefix libomp)/include" \
+  OMPLIBS="-L$(brew --prefix libomp)/lib -lomp"
+```
+
+Default flags: `-O3 -std=c++17 -Wall -Wextra -Wpedantic`. Use the same underlying compiler and floating-point options for both executables. Add `-B` when changing compilers or flags to force a rebuild.
+
+## Quick start
+
+Run the hand-checkable example:
+
+```sh
+./build/kmeans_serial --input examples/tiny.txt --k 2 \
+  --init-indices 0,2 --iterations 1 --dump --trace
+```
+
+Expected final centroids: `[0, 1, 10, 11]` (row-major), counts: `[2, 2]`, labels: `[0, 0, 1, 1]`, and SSE: `4`.
+
+Run generated data with two MPI processes and two threads per process:
+
+```sh
+mpiexec -n 2 ./build/kmeans_mpi --n 10000 --d 8 --k 16 \
+  --variant v3 --threads 2 --comm allreduce --iterations 50
+```
+
+Use `--variant v1 --threads 1` for pure MPI, `--variant v2` for atomic accumulation, or `--comm reduce-bcast` for the alternative communication strategy. Each successful run writes one JSON object to stdout; errors go to stderr.
+
+## Data and options
+
+Synthetic data is determined by the seed and global sample indices, so changing the process count preserves the dataset within the same build environment. No download is needed. The generator uses 16 Gaussian groups, independently of the requested number of clusters `K`. `--skew` assigns 90% of samples to one generating group.
+
+For external data, use a whitespace-separated text file with `N D` on the first line and exactly `N * D` finite coordinates afterward. Remove IDs and labels, and apply scaling consistently beforehand. File dimensions override `--n` and `--d`. Rank 0 reads the file and distributes it with Scatterv; the total number of coordinates must fit in `INT_MAX`.
+
+| Option | Default / meaning |
+| --- | --- |
+| `--n`, `--d`, `--k` | `10000`, `8`, `16`; require `N,D > 0` and `1 <= K <= N` |
+| `--seed` | `42`; data generation and initial sample selection |
+| `--input FILE` | Prepared text dataset |
+| `--init-indices 0,2,...` | `K` distinct global sample indices |
+| `--variant` | Serial: `v0`; parallel: `v1`, `v2`, or `v3` (default) |
+| `--comm` | `allreduce` (default) or `reduce-bcast` |
+| `--threads` | `1`; V0 and V1 require one thread |
+| `--mode` | `fixed` (default) or `converge` |
+| `--iterations` | `50` in fixed mode; maximum `300` in convergence mode |
+| `--tol` | `1e-6`; relative maximum centroid displacement |
+| `--warmup` | `0`; warmup iterations followed by a reset to the initial state |
+| `--skew` | Enable the skewed synthetic distribution |
+| `--dump` | Include initial/final centroids and final labels |
+| `--trace` | Per-iteration SSE, counts, and updated centroids |
+| `--profile` | Accumulation, merge, reduction, update, and broadcast times |
+
+Run either executable with `--help` for the CLI summary. `--dump` and `--trace` require both `N` and `K * D` to be at most `100000`.
+
+Distances and sums use `double`; counts use 64-bit integers. Exact ties select the lowest cluster index; empty clusters retain their previous centroids. Final labels, counts, and SSE are recomputed using the final centroids. Compare floating-point results with tolerances. Gaussian generation can differ across math libraries; use `data_fingerprint` to check inputs.
+
+## Tests
+
+```sh
+make test
+make test-mpi
+```
+
+`make test` runs serial and experiment-tool tests, skipping MPI integration cases. `make test-mpi` also runs real MPI/OpenMP comparisons, including uneven partitions, processes without samples, both communication strategies, and distributed error handling.
+
+To customize the launcher:
+
+```sh
+TEST_MPI=1 MPIEXEC=mpiexec MPIEXEC_FLAGS='--bind-to none' \
+  python3 -m unittest discover -s tests -v
+```
+
+On HPC, run parallel tests and benchmarks inside a scheduler allocation with enough cores. `--threads` sets the team size; the program disables dynamic teams and checks the actual thread count.
+
+## Benchmarks
+
+Preview the workload, then run and summarize a strong-scaling experiment:
+
+```sh
+python3 scripts/benchmark.py --suite smoke --processes 1,2 --threads 2 \
+  --n 10000 --d 8 --k 16 --iterations 5 --dry-run
+
+python3 scripts/benchmark.py --suite strong --processes 1,2,4 --threads 1 \
+  --n 100000 --d 32 --k 32 --repeats 5 --output results/strong.jsonl
+python3 scripts/summarize.py results/strong.jsonl --output results/strong.csv
+```
+
+| Suite | Comparison |
+| --- | --- |
+| `serial` | V0 only |
+| `smoke` | V0–V3, plus both communication strategies for V3 |
+| `strong` | Fixed problem size, varying processes, with a V0 baseline |
+| `weak` | Fixed samples per process: total `N = --n * P` |
+| `hybrid` | Fixed `--total-cores`; set `T = total_cores / P` for valid process counts |
+| `threads` | V2 versus V3 with the same process/thread configuration |
+| `communication` | Allreduce versus Reduce + Bcast for V3 |
+| `sensitivity` | Vary one of N, D, or K at a time |
+
+Defaults: 50 measured iterations, 2 warmup iterations, and 5 repetitions per configuration. Configuration order is shuffled within each repetition. `--launcher` accepts a tokenized command with `{p}` and `{t}` placeholders; no shell is used.
+
+For example, with Open MPI and an appropriate core allocation:
+
+```sh
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+python3 scripts/benchmark.py --suite communication --processes 1,2 --threads 2 \
+  --launcher 'mpiexec -n {p} --map-by slot:PE={t} --bind-to core --report-bindings' \
+  --output results/communication.jsonl
+```
+
+Check the launcher's binding report and record the allocation. Environment variables alone do not establish affinity. Avoid oversubscription for performance measurements. Scheduler and module setup depend on the cluster.
+
+Raw JSONL and stderr logs are saved separately. CSV summaries report median/minimum/maximum kernel times, repetition counts, and SSE ranges. Existing output files are never overwritten; overlapping measurements are rejected.
+
+## Timing and reproducibility
+
+- `kernel_seconds` measures Lloyd iterations after warmup/reset and a starting barrier, taking the maximum elapsed time across processes.
+- Data preparation, initialization, warmup, and final evaluation have separate timers. `total_seconds` starts after MPI initialization and ends after final evaluation; `launch_seconds` measures the external command.
+- `--trace` and `--profile` add diagnostic work and are rejected by the benchmark summary. Separate phase maxima cannot be added to reconstruct total time.
+- Strong-scaling speedup is `t_serial / t_parallel`; efficiency is `speedup / (P * T)`. Weak-scaling efficiency compares `P=1` and `P>1` with fixed samples and threads per process. Use matching workloads and environments.
+
+Benchmark records include hostnames, executable paths, launch commands, and job IDs. Generated results, external datasets, local notes, credentials, caches, and build outputs are excluded by `.gitignore`. Review records before publishing them separately.
+
+## Repository layout
+
+```text
+src/          C++ algorithm, data generation, MPI runtime, JSON output
+scripts/      Benchmark runner and CSV summary
+tests/       Numerical and experiment-tool tests
+examples/     Small input with a hand-computed expected result
+Makefile      Serial/parallel builds and tests
+```
+
+OpenAI Codex assisted with the implementation, tests, and documentation. Performance must be measured on the target system; this repository does not claim cluster scaling results.
