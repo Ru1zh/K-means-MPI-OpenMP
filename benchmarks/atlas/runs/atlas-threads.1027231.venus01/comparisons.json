@@ -1,0 +1,86 @@
+[
+  {
+    "p": 2,
+    "t": 6,
+    "first": {
+      "p": 2,
+      "t": 6,
+      "variant": "v2",
+      "communication": "allreduce"
+    },
+    "second": {
+      "p": 2,
+      "t": 6,
+      "variant": "v3",
+      "communication": "allreduce"
+    },
+    "first_seconds": {
+      "median": 1.50135492,
+      "minimum": 1.4311101320000001,
+      "maximum": 1.544513909
+    },
+    "second_seconds": {
+      "median": 0.8978489629999999,
+      "minimum": 0.8620305930000001,
+      "maximum": 0.9549984049999998
+    },
+    "second_speedup_vs_first": 1.6721686852357596,
+    "cross_socket_ranks": []
+  },
+  {
+    "p": 4,
+    "t": 3,
+    "first": {
+      "p": 4,
+      "t": 3,
+      "variant": "v2",
+      "communication": "allreduce"
+    },
+    "second": {
+      "p": 4,
+      "t": 3,
+      "variant": "v3",
+      "communication": "allreduce"
+    },
+    "first_seconds": {
+      "median": 1.3731880840000001,
+      "minimum": 1.3407605550000001,
+      "maximum": 1.394033151
+    },
+    "second_seconds": {
+      "median": 0.893993391,
+      "minimum": 0.8720113359999999,
+      "maximum": 0.981836797
+    },
+    "second_speedup_vs_first": 1.5360159234107809,
+    "cross_socket_ranks": []
+  },
+  {
+    "p": 6,
+    "t": 2,
+    "first": {
+      "p": 6,
+      "t": 2,
+      "variant": "v2",
+      "communication": "allreduce"
+    },
+    "second": {
+      "p": 6,
+      "t": 2,
+      "variant": "v3",
+      "communication": "allreduce"
+    },
+    "first_seconds": {
+      "median": 1.155894118,
+      "minimum": 1.097906078,
+      "maximum": 1.1964160750000001
+    },
+    "second_seconds": {
+      "median": 0.9439618249999999,
+      "minimum": 0.920078335,
+      "maximum": 0.9800203519999999
+    },
+    "second_speedup_vs_first": 1.2245136269149444,
+    "cross_socket_ranks": []
+  }
+]

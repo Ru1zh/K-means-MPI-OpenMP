@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "description": "Unredacted Atlas experiment evidence copied from the original HPC folder; OS caches and duplicate download archives omitted.",
+  "formal_records": 125,
+  "workload": {
+    "n": 1000000,
+    "d": 32,
+    "k": 32,
+    "seed": 42,
+    "iterations": 20,
+    "warmup": 2,
+    "repeats": 5
+  },
+  "validation_directory": "runs/atlas-validation.1027219.venus01",
+  "studies": {
+    "strong": {
+      "directory": "runs/atlas-strong.1027222.venus01",
+      "source_package": "source-packages/project3-atlas-strong.tar.gz",
+      "raw_file": "strong.jsonl",
+      "records": 35
+    },
+    "hybrid": {
+      "directory": "runs/atlas-hybrid.1027229.venus01",
+      "source_package": "source-packages/project3-atlas-hybrid.tar.gz",
+      "raw_file": "hybrid.jsonl",
+      "records": 30
+    },
+    "threads": {
+      "directory": "runs/atlas-threads.1027231.venus01",
+      "source_package": "source-packages/project3-atlas-threads.tar.gz",
+      "raw_file": "raw.jsonl",
+      "records": 30
+    },
+    "communication": {
+      "directory": "runs/atlas-communication.1027272.venus01",
+      "source_package": "source-packages/project3-atlas-communication.tar.gz",
+      "raw_file": "raw.jsonl",
+      "records": 30
+    }
+  }
+}

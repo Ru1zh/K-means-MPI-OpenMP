@@ -1,0 +1,51 @@
+#!/bin/bash
+#PBS -N p3_cpu_smoke
+#PBS -q parallel
+#PBS -j oe
+#PBS -l select=1:ncpus=12:mpiprocs=3:ompthreads=4:mem=8gb
+#PBS -l walltime=00:30:00
+
+# Atlas parallel currently requires at least 12 CPU cores per job.
+# This is a compilation/correctness smoke run, not a performance benchmark.
+set -eo pipefail
+cd "$PBS_O_WORKDIR"
+
+source /etc/profile.d/modules.sh
+module purge
+# Open MPI's module first loads its GCC 7.3 dependency. Select GCC 9 afterwards
+# so its compiler and runtime search paths have priority.
+module load openmpi/4.1.2
+module load gcc/9.2.0
+
+atlas_cxx=$(command -v g++)
+atlas_gcc_version=$("$atlas_cxx" -dumpfullversion -dumpversion)
+if [[ "$atlas_gcc_version" != 9.2.0 ]]; then
+  echo "Expected GCC 9.2.0, found $atlas_gcc_version at $atlas_cxx" >&2
+  exit 1
+fi
+# Override even an absolute compiler path embedded in the MPI wrapper.
+# Compile/link/run compatibility is checked by the actual smoke run below.
+export OMPI_CXX="$atlas_cxx"
+
+hostname
+module list
+"$atlas_cxx" --version
+mpicxx --showme:command
+mpicxx --version
+mpirun --version
+
+# Always rebuild on Linux; the upload bundle excludes local build products.
+make -B all CXX="$atlas_cxx" MPICXX=mpicxx
+
+export OMP_NUM_THREADS=4
+export OMP_DYNAMIC=FALSE
+
+echo 'Serial reference:'
+./build/kmeans_serial --n 10000 --d 8 --k 16 --seed 42 --iterations 5
+
+# No explicit CPU binding for this first compatibility smoke run.
+# Formal scaling measurements need a separately verified binding policy.
+echo 'MPI + OpenMP: 3 ranks x 4 threads:'
+mpirun -np 3 --bind-to none ./build/kmeans_mpi \
+  --n 10000 --d 8 --k 16 --seed 42 --iterations 5 \
+  --variant v3 --threads 4 --comm allreduce

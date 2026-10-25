@@ -1,0 +1,86 @@
+[
+  {
+    "p": 2,
+    "t": 6,
+    "first": {
+      "p": 2,
+      "t": 6,
+      "variant": "v3",
+      "communication": "allreduce"
+    },
+    "second": {
+      "p": 2,
+      "t": 6,
+      "variant": "v3",
+      "communication": "reduce-bcast"
+    },
+    "first_seconds": {
+      "median": 0.910166067,
+      "minimum": 0.9065863879999998,
+      "maximum": 0.930287195
+    },
+    "second_seconds": {
+      "median": 0.9136097240000001,
+      "minimum": 0.8889198930000002,
+      "maximum": 0.9472413390000001
+    },
+    "second_speedup_vs_first": 0.99623071327993,
+    "cross_socket_ranks": []
+  },
+  {
+    "p": 4,
+    "t": 3,
+    "first": {
+      "p": 4,
+      "t": 3,
+      "variant": "v3",
+      "communication": "allreduce"
+    },
+    "second": {
+      "p": 4,
+      "t": 3,
+      "variant": "v3",
+      "communication": "reduce-bcast"
+    },
+    "first_seconds": {
+      "median": 0.919555932,
+      "minimum": 0.916104934,
+      "maximum": 0.9296941559999998
+    },
+    "second_seconds": {
+      "median": 0.935006901,
+      "minimum": 0.886338604,
+      "maximum": 0.949262418
+    },
+    "second_speedup_vs_first": 0.9834750214319541,
+    "cross_socket_ranks": []
+  },
+  {
+    "p": 6,
+    "t": 2,
+    "first": {
+      "p": 6,
+      "t": 2,
+      "variant": "v3",
+      "communication": "allreduce"
+    },
+    "second": {
+      "p": 6,
+      "t": 2,
+      "variant": "v3",
+      "communication": "reduce-bcast"
+    },
+    "first_seconds": {
+      "median": 0.923267325,
+      "minimum": 0.8898346849999998,
+      "maximum": 0.9278434099999999
+    },
+    "second_seconds": {
+      "median": 0.9225015059999999,
+      "minimum": 0.8878736439999999,
+      "maximum": 0.9270260589999999
+    },
+    "second_speedup_vs_first": 1.0008301547423166,
+    "cross_socket_ranks": []
+  }
+]

@@ -1,0 +1,8 @@
+#!/bin/bash
+#PBS -N p3_threads
+#PBS -q parallel
+#PBS -j oe
+#PBS -l select=1:ncpus=12:mpiprocs=12:ompthreads=1:mem=8gb
+#PBS -l walltime=00:30:00
+ATLAS_STUDY=threads
+source "$PBS_O_WORKDIR/atlas-strategies-common.sh"

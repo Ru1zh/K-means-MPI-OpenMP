@@ -11,7 +11,7 @@ from pathlib import Path
 KEYS = ['run_id', 'suite', 'n', 'd', 'k', 'p', 't', 'nodes', 'variant', 'communication',
         'mode', 'seed', 'skew', 'iterations', 'warmup', 'data_fingerprint', 'init_indices',
         'compiler', 'mpi_version', 'omp_places', 'omp_proc_bind', 'binding_note',
-        'binary_sha256', 'host', 'platform', 'launcher']
+        'binary_sha256', 'host', 'platform', 'launcher', 'serial_launcher']
 
 
 def main():
@@ -26,6 +26,8 @@ def main():
             if not line.strip():
                 continue
             row = json.loads(line)
+            # Older runs predate explicit serial launcher/affinity recording.
+            row.setdefault('serial_launcher', '')
             # trace/profile 增加额外工作，收敛模式轮数可变，均不能混入固定工作量比较。
             if row['diagnostic'] or row['mode'] != 'fixed':
                 raise ValueError('Summary accepts only fixed-work, non-diagnostic measurements')

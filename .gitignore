@@ -20,6 +20,18 @@
 *.o[0-9]*
 *.e[0-9]*
 
+# Retained Atlas evidence, including original logs and measurements.
+# Future runs still belong in ignored results/ or artifacts/ directories.
+!/benchmarks/atlas/runs/**/*.jsonl
+!/benchmarks/atlas/runs/**/*.csv
+!/benchmarks/atlas/runs/**/*.tsv
+!/benchmarks/atlas/runs/**/*.log
+!/benchmarks/atlas/runs/**/*.o[0-9]*
+!/benchmarks/atlas/runs/**/*.e[0-9]*
+
+# Derived report tables retained alongside the reproducible figures.
+!/analysis/atlas/*.csv
+
 # Python environments and caches
 __pycache__/
 *.py[cod]

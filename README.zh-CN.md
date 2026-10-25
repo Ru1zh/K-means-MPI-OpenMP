@@ -1,6 +1,6 @@
 # Lloyd K-means：MPI + OpenMP
 
-[English](README.md) | 简体中文
+[English](README.md) | [简体中文](README.zh-CN.md) | [한국어](README.ko.md)
 
 使用 C++17 实现 Lloyd K-means，比较进程与线程并行策略。项目包含串行参考、MPI/OpenMP 版本、数值测试和实验脚本。聚类算法自行实现，不依赖聚类库。
 
@@ -15,7 +15,7 @@
 
 ## 编译
 
-需要 C++17 编译器和 Make；并行程序需要 MPI-3+ 与 OpenMP；测试和脚本需要 Python 3.9+，仅使用标准库。
+需要 C++17 编译器和 Make；并行程序需要 MPI-3+ 与 OpenMP；测试、实验和离线核查需要 Python 3.8+，仅使用标准库；可选的报告绘图需要 Python 3.9+ 和 Matplotlib，依赖见 `requirements.txt`。
 
 Linux/HPC 环境先加载相互匹配的编译器与 MPI 模块，再执行：
 
@@ -125,6 +125,8 @@ python3 scripts/summarize.py results/strong.jsonl --output results/strong.csv
 
 脚本默认测量 50 轮、预热 2 轮，每配置重复 5 次，每批重复内打乱配置顺序。`--launcher` 接收含 `{p}`、`{t}` 占位符的命令，按参数列表执行，不经过 shell。
 
+`--serial-launcher` 为 V0 设置可选的命令前缀，例如 Linux 上的 `taskset --cpu-list 40`。CPU 编号必须来自调度器分配范围，并在计时前检查绑核。两种启动器都会记录到原始结果和 CSV 分组中；缺少串行启动器字段的旧结果仍可读取。
+
 以下为 Open MPI 的绑定示例，需要对应核数的资源分配：
 
 ```sh
@@ -144,9 +146,34 @@ python3 scripts/benchmark.py --suite communication --processes 1,2 --threads 2 \
 - `kernel_seconds` 测量预热、重置和起始 barrier 之后的 Lloyd 迭代，取各进程耗时的最大值。
 - 数据准备、初始化、预热与最终评估分别计时。`total_seconds` 从 MPI 初始化后开始，到最终评估结束；`launch_seconds` 测量外部命令耗时。
 - `--trace`、`--profile` 会引入诊断开销，实验汇总会拒绝此类记录。各阶段最大耗时不能相加重建总时间。
-- 强扩展加速比为 `t_serial / t_parallel`，control over the degree of data skew and enables comparisons of thread contention, communication methods,效率为 `speedup / (P * T)`。弱扩展效率比较每进程样本数及线程数固定时 `P=1` 与 `P>1` 的耗时。只对工作量和环境匹配的配置计算这些指标。
+- 强扩展加速比为 `t_serial / t_parallel`，效率为 `speedup / (P * T)`。弱扩展效率比较每进程样本数及线程数固定时 `P=1` 与 `P>1` 的耗时。只对工作量和环境匹配的配置计算这些指标。
 
-实验记录包含主机名、可执行文件路径、启动命令和作业 ID。`.gitignore` 排除了生成结果、外部数据、本地笔记、凭据、缓存和构建产物.
+实验记录包含主机名、可执行文件路径、启动命令和作业 ID。`.gitignore` 排除新的运行结果、外部数据、本地笔记、凭据、缓存和构建产物；明确纳入 `benchmarks/atlas/` 中保留的实验记录。
+
+## 已完成的 Atlas 实验与复现
+
+仓库保留四组 Atlas CPU 正式实验的 **125 条测量记录**，以及正确性验证和 pilot 记录。正式实验使用 N=1,000,000、D=32、K=32、seed=42、**20 轮计时**、2 轮预热、每配置 5 次重复，与上面的通用默认参数不同。
+
+```sh
+python3 scripts/reproduce_atlas.py --verify-only
+python3 scripts/reproduce_atlas.py
+python3 hpc/build-atlas-strategy-packages.py
+```
+
+前两条命令在本地检查文件完整性、重算统计并复查数值与绑核记录，无需 MPI 或 HPC 登录；结果写入 `artifacts/atlas-audit/`，不覆盖存档。第三条命令从当前代码生成独立作业包，传到 HPC、解压并进入包目录后再提交 PBS，不直接从仓库提交 `hpc/` 下的 PBS 文件。
+
+详见 [HPC 使用说明](hpc/ATLAS_RUN_GUIDE.zh-CN.md)、[实验文件索引](benchmarks/atlas/EXPERIMENT_INDEX.zh-CN.md)及[中文结果总览](analysis/atlas/report_results.zh-CN.md)。历史源码包保持原样，新作业包使用当前代码。实验记录按要求保留原始用户名、主机名和路径，未脱敏。
+
+## 报告图表与统计表
+
+已生成五张英文报告图，每张提供 PNG、PDF 和 SVG，并保留精确 CSV，以及中、英、韩三语言图注。详见[图表索引](analysis/atlas/Figure/FIGURE_GUIDE.zh-CN.md)、[图表总览](analysis/atlas/overview.png)、[中文结果与图注](analysis/atlas/report_results.zh-CN.md)。安装可选绘图依赖后，可在新目录重新生成：
+
+```sh
+python3 -m pip install -r requirements.txt
+python3 scripts/plot_atlas.py --output artifacts/atlas-figures-new
+```
+
+仅绘图需要 Matplotlib；`--tables-only` 只用标准库生成统计及中、英、韩三语言图注和说明。误差线表示实测最小到最大值，不是置信区间；各项比较保留作业边界，并明确标出参考基线。
 
 ## 目录结构
 
@@ -155,5 +182,8 @@ src/          C++ 算法、数据生成、MPI 运行封装与 JSON 输出
 scripts/      实验运行与 CSV 汇总
 tests/       数值正确性与实验工具测试
 examples/     可手算验证的小型输入
+hpc/          PBS 脚本、绑核工具与独立作业包生成器
+benchmarks/   Atlas 原始结果、源码快照和核查证据
+analysis/     报告图表、精确统计表、图注和复现说明
 Makefile      串行／并行编译与测试
 ```
