@@ -14,7 +14,7 @@
 /artifacts/
 /docs/
 *.jsonl
-*.csv
+# *.csv
 *.tsv
 *.log
 *.o[0-9]*
