@@ -1,0 +1,79 @@
+Job: 1495933.stdct-mgmt-02
+Host: IN-006
+Directory: /nfs/home/svu/sooyeounsong/kmeans_mpi_openmp
+Date: 2026-10-26T18:42:48+08:00
+Currently Loaded Modulefiles:
+ 1) shared                         10) libpciaccess/0.18.1-GCCcore-13.3.0  
+ 2) GCCcore/13.3.0                 11) hwloc/2.10.0-GCCcore-13.3.0         
+ 3) zlib/1.3.1-GCCcore-13.3.0      12) OpenSSL/3                           
+ 4) binutils/2.42-GCCcore-13.3.0   13) libevent/2.1.12-GCCcore-13.3.0      
+ 5) GCC/13.3.0                     14) UCX/1.16.0-GCCcore-13.3.0           
+ 6) ncurses/6.5-GCCcore-13.3.0     15) libfabric/1.21.0-GCCcore-13.3.0     
+ 7) numactl/2.0.18-GCCcore-13.3.0  16) PMIx/5.0.2-GCCcore-13.3.0           
+ 8) XZ/5.4.5-GCCcore-13.3.0        17) UCC/1.3.0-GCCcore-13.3.0            
+ 9) libxml2/2.12.7-GCCcore-13.3.0  18) OpenMPI/5.0.3-GCC-13.3.0            
+Python 3.9.18
+g++ (GCC) 13.3.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+mpirun (Open MPI) 5.0.3
+
+Report bugs to https://www.open-mpi.org/community/help/
+	linux-vdso.so.1 (0x000015555551c000)
+	libmpi.so.40 => /app1/ebapps/arches/flat-avx512/software/OpenMPI/5.0.3-GCC-13.3.0/lib/libmpi.so.40 (0x0000155555191000)
+	libstdc++.so.6 => /app1/ebapps/arches/flat-avx512/software/GCCcore/13.3.0/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../lib64/libstdc++.so.6 (0x0000155554f2d000)
+	libm.so.6 => /lib64/libm.so.6 (0x0000155554e42000)
+	libgomp.so.1 => /app1/ebapps/arches/flat-avx512/software/GCCcore/13.3.0/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../lib64/libgomp.so.1 (0x0000155554def000)
+	libgcc_s.so.1 => /app1/ebapps/arches/flat-avx512/software/GCCcore/13.3.0/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../lib64/libgcc_s.so.1 (0x0000155554dc9000)
+	libc.so.6 => /lib64/libc.so.6 (0x0000155554bc0000)
+	libucc.so.1 => /app1/ebapps/arches/flat-avx512/software/UCC/1.3.0-GCCcore-13.3.0/lib/libucc.so.1 (0x0000155554b86000)
+	libopen-pal.so.80 => /app1/ebapps/arches/flat-avx512/software/OpenMPI/5.0.3-GCC-13.3.0/lib/libopen-pal.so.80 (0x0000155554a4a000)
+	libfabric.so.1 => /app1/ebapps/arches/flat-avx512/software/libfabric/1.21.0-GCCcore-13.3.0/lib/libfabric.so.1 (0x000015555455e000)
+	librdmacm.so.1 => /lib64/librdmacm.so.1 (0x0000155554541000)
+	libefa.so.1 => /lib64/libefa.so.1 (0x0000155554534000)
+	libibverbs.so.1 => /lib64/libibverbs.so.1 (0x0000155554512000)
+	libuuid.so.1 => /lib64/libuuid.so.1 (0x0000155554506000)
+	libnuma.so.1 => /app1/ebapps/arches/flat-avx512/software/numactl/2.0.18-GCCcore-13.3.0/lib/libnuma.so.1 (0x00001555544f7000)
+	libatomic.so.1 => /app1/ebapps/arches/flat-avx512/software/GCCcore/13.3.0/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../lib64/libatomic.so.1 (0x00001555544ed000)
+	libucp.so.0 => /app1/ebapps/arches/flat-avx512/software/UCX/1.16.0-GCCcore-13.3.0/lib/libucp.so.0 (0x000015555441d000)
+	libuct.so.0 => /app1/ebapps/arches/flat-avx512/software/UCX/1.16.0-GCCcore-13.3.0/lib/libuct.so.0 (0x00001555543e3000)
+	libucs.so.0 => /app1/ebapps/arches/flat-avx512/software/UCX/1.16.0-GCCcore-13.3.0/lib/libucs.so.0 (0x0000155554381000)
+	libucm.so.0 => /app1/ebapps/arches/flat-avx512/software/UCX/1.16.0-GCCcore-13.3.0/lib/libucm.so.0 (0x0000155554366000)
+	libbfd-2.42.so => /app1/ebapps/arches/flat-avx512/software/binutils/2.42-GCCcore-13.3.0/lib/libbfd-2.42.so (0x000015555421c000)
+	libzstd.so.1 => /lib64/libzstd.so.1 (0x0000155554145000)
+	libsframe.so.1 => /app1/ebapps/arches/flat-avx512/software/binutils/2.42-GCCcore-13.3.0/lib/libsframe.so.1 (0x000015555413d000)
+	libpmix.so.2 => /app1/ebapps/arches/flat-avx512/software/PMIx/5.0.2-GCCcore-13.3.0/lib/libpmix.so.2 (0x0000155553f13000)
+	libevent_core-2.1.so.7 => /app1/ebapps/arches/flat-avx512/software/libevent/2.1.12-GCCcore-13.3.0/lib/libevent_core-2.1.so.7 (0x0000155553edc000)
+	libevent_pthreads-2.1.so.7 => /app1/ebapps/arches/flat-avx512/software/libevent/2.1.12-GCCcore-13.3.0/lib/libevent_pthreads-2.1.so.7 (0x0000155553ed7000)
+	libhwloc.so.15 => /app1/ebapps/arches/flat-avx512/software/hwloc/2.10.0-GCCcore-13.3.0/lib/libhwloc.so.15 (0x0000155553e74000)
+	libpciaccess.so.0 => /app1/ebapps/arches/flat-avx512/software/libpciaccess/0.18.1-GCCcore-13.3.0/lib/libpciaccess.so.0 (0x0000155553e68000)
+	libxml2.so.2 => /app1/ebapps/arches/flat-avx512/software/libxml2/2.12.7-GCCcore-13.3.0/lib/libxml2.so.2 (0x0000155553d0b000)
+	libz.so.1 => /app1/ebapps/arches/flat-avx512/software/zlib/1.3.1-GCCcore-13.3.0/lib/libz.so.1 (0x0000155553cee000)
+	liblzma.so.5 => /app1/ebapps/arches/flat-avx512/software/XZ/5.4.5-GCCcore-13.3.0/lib/liblzma.so.5 (0x0000155553cc0000)
+	/lib64/ld-linux-x86-64.so.2 (0x000015555551e000)
+	libnl-3.so.200 => /lib64/libnl-3.so.200 (0x0000155553c9c000)
+	libnl-route-3.so.200 => /lib64/libnl-route-3.so.200 (0x0000155553c06000)
+===== PBS node file =====
+in-006.stdct.loc
+in-006.stdct.loc
+===== Selected environment =====
+EXP_D=32
+EXP_ITERATIONS=50
+EXP_K=32
+EXP_N=100000
+EXP_ORDER_SEED=20261026
+EXP_OUT=results/v2v3_1495933.stdct-mgmt-02
+EXP_REPEATS=5
+EXP_SEED=42
+EXP_WARMUP=2
+LD_LIBRARY_PATH=/app1/ebapps/arches/flat-avx512/software/GCCcore/13.3.0/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../lib64:/app1/ebapps/arches/flat-avx512/software/OpenMPI/5.0.3-GCC-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/UCC/1.3.0-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/PMIx/5.0.2-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/libfabric/1.21.0-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/UCX/1.16.0-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/libevent/2.1.12-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/OpenSSL/3/lib:/app1/ebapps/arches/flat-avx512/software/hwloc/2.10.0-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/libpciaccess/0.18.1-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/libxml2/2.12.7-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/XZ/5.4.5-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/numactl/2.0.18-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/ncurses/6.5-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/binutils/2.42-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/zlib/1.3.1-GCCcore-13.3.0/lib:/app1/ebapps/arches/flat-avx512/software/GCCcore/13.3.0/lib64
+OMP_DYNAMIC=FALSE
+OMP_NUM_THREADS=6
+OMP_PLACES=cores
+OMP_PROC_BIND=close
+===== Executable and script checksums =====
+55c57648d41c8d2f0b123754f4befeb843b3fd30786a6d4140cfc666f6702f78  ./build/kmeans_mpi
+b0f0f674c1e4dc28fa047e3cd1f584e125bf4b7cb5ff9a6244e92462d6de1785  scripts/benchmark.py
+b4cedafa8c4f1d2200a6d2cc498c89dc7788a5855c55ea11010e5286909b22ab  scripts/summarize.py

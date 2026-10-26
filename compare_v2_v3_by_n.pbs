@@ -1,0 +1,162 @@
+#!/bin/bash
+#PBS -q auto_free
+#PBS -j oe
+#PBS -N km_v2v3_N
+#PBS -l walltime=01:00:00
+#PBS -l select=1:ncpus=12:mpiprocs=2:ompthreads=6:mem=8gb
+
+set -euo pipefail
+cd "${PBS_O_WORKDIR:?PBS_O_WORKDIR is not set}"
+
+module purge
+module load shared
+module load OpenMPI/5.0.3-GCC-13.3.0
+
+unset OMPI_MCA_btl OMPI_MCA_pml OMPI_MCA_hwloc_base_binding_policy
+
+cxxlib="$(g++ -print-file-name=libstdc++.so.6)"
+if [[ "$cxxlib" != /* || ! -f "$cxxlib" ]]; then
+    echo "Cannot locate GCC C++ runtime: $cxxlib" >&2
+    exit 1
+fi
+
+export LD_LIBRARY_PATH="$(dirname "$cxxlib")${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+export OMP_DYNAMIC=FALSE
+export OMP_NUM_THREADS=6
+
+# Fixed experimental conditions.
+export EXP_P=2
+export EXP_T=6
+export EXP_D="${EXP_D:-32}"
+export EXP_K="${EXP_K:-32}"
+export EXP_ITERATIONS="${EXP_ITERATIONS:-50}"
+export EXP_WARMUP="${EXP_WARMUP:-2}"
+export EXP_REPEATS="${EXP_REPEATS:-5}"
+export EXP_SEED="${EXP_SEED:-42}"
+export EXP_ORDER_SEED="${EXP_ORDER_SEED:-20261026}"
+export EXP_TIMEOUT="${EXP_TIMEOUT:-300}"
+
+# Space-separated sample sizes.
+export EXP_N_LIST="${EXP_N_LIST:-1000 10000 100000 1000000}"
+read -r -a sample_sizes <<< "$EXP_N_LIST"
+
+export EXP_OUT="results/v2v3_by_n_${PBS_JOBID}"
+
+for file in scripts/benchmark.py scripts/summarize.py; do
+    if [[ ! -f "$file" ]]; then
+        echo "Missing file: $PWD/$file" >&2
+        exit 1
+    fi
+done
+
+if [[ ! -x ./build/kmeans_mpi ]]; then
+    echo "Missing executable: $PWD/build/kmeans_mpi" >&2
+    exit 1
+fi
+
+python3 -m py_compile scripts/benchmark.py scripts/summarize.py
+
+# Validate N values before starting any measurements.
+declare -A seen_n=()
+
+for n in "${sample_sizes[@]}"; do
+    if [[ ! "$n" =~ ^[1-9][0-9]*$ ]]; then
+        echo "Invalid N: $n" >&2
+        exit 1
+    fi
+
+    if (( n < EXP_K )); then
+        echo "N=$n must be at least K=$EXP_K" >&2
+        exit 1
+    fi
+
+    if [[ -n "${seen_n[$n]:-}" ]]; then
+        echo "Duplicate N: $n" >&2
+        exit 1
+    fi
+
+    seen_n[$n]=1
+done
+
+mkdir -p results
+mkdir "$EXP_OUT"
+
+{
+    echo "Job: $PBS_JOBID"
+    echo "Host: $(hostname)"
+    echo "Directory: $PWD"
+    echo "Date: $(date -Is)"
+
+    module list
+    python3 --version
+    g++ --version
+    mpirun --version
+    ldd ./build/kmeans_mpi
+
+    echo "===== PBS node file ====="
+    cat "$PBS_NODEFILE"
+
+    echo "===== Selected environment ====="
+    env | sort | grep -E \
+        '^(EXP_|OMP_|OMPI_|PRTE_|PMIX_|LD_LIBRARY_PATH=)' || true
+
+    echo "===== Executable and script checksums ====="
+    sha256sum \
+        ./build/kmeans_mpi \
+        scripts/benchmark.py \
+        scripts/summarize.py
+} > "$EXP_OUT/environment.txt" 2>&1
+
+cp scripts/benchmark.py "$EXP_OUT/benchmark_used.py"
+cp scripts/summarize.py "$EXP_OUT/summarize_used.py"
+
+LAUNCHER='mpirun -np {p} -x LD_LIBRARY_PATH -x OMP_NUM_THREADS -x OMP_PLACES -x OMP_PROC_BIND -x OMP_DYNAMIC --map-by slot:PE={t} --bind-to core --report-bindings'
+
+raw_files=()
+
+for n in "${sample_sizes[@]}"; do
+    raw="$EXP_OUT/n${n}_p${EXP_P}_t${EXP_T}.jsonl"
+    raw_files+=("$raw")
+
+    args=(
+        --suite threads
+        --processes "$EXP_P"
+        --threads "$EXP_T"
+        --n "$n"
+        --d "$EXP_D"
+        --k "$EXP_K"
+        --iterations "$EXP_ITERATIONS"
+        --warmup "$EXP_WARMUP"
+        --repeats "$EXP_REPEATS"
+        --seed "$EXP_SEED"
+        --order-seed "$EXP_ORDER_SEED"
+        --timeout "$EXP_TIMEOUT"
+        --launcher "$LAUNCHER"
+        --output "$raw"
+    )
+
+    echo "===== N=$n, P=$EXP_P, T=$EXP_T ====="
+
+    python3 -u scripts/benchmark.py \
+        "${args[@]}" \
+        --dry-run \
+        > "$EXP_OUT/commands_n${n}.jsonl"
+
+    python3 -u scripts/benchmark.py "${args[@]}"
+
+    # Save a completed summary after each N.
+    python3 -u scripts/summarize.py \
+        "$raw" \
+        --output "$EXP_OUT/summary_n${n}.csv"
+
+    echo "===== Completed N=$n ====="
+done
+
+# Combine all completed N settings into one CSV.
+python3 -u scripts/summarize.py \
+    "${raw_files[@]}" \
+    --output "$EXP_OUT/n_summary.csv"
+
+echo "Completed. Results: $EXP_OUT"

@@ -1,0 +1,129 @@
+#!/bin/bash
+#PBS -q auto_free
+#PBS -j oe
+#PBS -N km_v2v3
+#PBS -l walltime=01:00:00
+#PBS -l select=1:ncpus=12:mpiprocs=2:ompthreads=6:mem=8gb
+
+set -euo pipefail
+cd "${PBS_O_WORKDIR:?PBS_O_WORKDIR is not set}"
+
+module purge
+module load shared
+module load OpenMPI/5.0.3-GCC-13.3.0
+
+unset OMPI_MCA_btl OMPI_MCA_pml OMPI_MCA_hwloc_base_binding_policy
+
+cxxlib="$(g++ -print-file-name=libstdc++.so.6)"
+if [[ "$cxxlib" != /* || ! -f "$cxxlib" ]]; then
+    echo "Cannot locate GCC C++ runtime: $cxxlib" >&2
+    exit 1
+fi
+
+export LD_LIBRARY_PATH="$(dirname "$cxxlib")${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+export OMP_DYNAMIC=FALSE
+
+export EXP_N="${EXP_N:-100000}"
+export EXP_D="${EXP_D:-32}"
+export EXP_K="${EXP_K:-32}"
+export EXP_ITERATIONS="${EXP_ITERATIONS:-50}"
+export EXP_WARMUP="${EXP_WARMUP:-2}"
+export EXP_REPEATS="${EXP_REPEATS:-5}"
+export EXP_SEED="${EXP_SEED:-42}"
+export EXP_ORDER_SEED="${EXP_ORDER_SEED:-20261026}"
+
+export EXP_OUT="results/v2v3_${PBS_JOBID}"
+
+for file in scripts/benchmark.py scripts/summarize.py; do
+    if [[ ! -f "$file" ]]; then
+        echo "Missing file: $PWD/$file" >&2
+        exit 1
+    fi
+done
+
+if [[ ! -x ./build/kmeans_mpi ]]; then
+    echo "Missing executable: $PWD/build/kmeans_mpi" >&2
+    exit 1
+fi
+
+mkdir -p results
+mkdir "$EXP_OUT"
+
+{
+    echo "Job: $PBS_JOBID"
+    echo "Host: $(hostname)"
+    echo "Directory: $PWD"
+    echo "Date: $(date -Is)"
+    module list
+    python3 --version
+    g++ --version
+    mpirun --version
+    ldd ./build/kmeans_mpi
+
+    echo "===== PBS node file ====="
+    cat "$PBS_NODEFILE"
+
+    echo "===== Selected environment ====="
+    env | sort | grep -E \
+        '^(EXP_|OMP_|OMPI_|PRTE_|PMIX_|LD_LIBRARY_PATH=)' || true
+
+    echo "===== Executable and script checksums ====="
+    sha256sum \
+        ./build/kmeans_mpi \
+        scripts/benchmark.py \
+        scripts/summarize.py
+} > "$EXP_OUT/environment.txt" 2>&1
+
+# Preserve the scripts used for this job.
+cp scripts/benchmark.py "$EXP_OUT/benchmark_used.py"
+cp scripts/summarize.py "$EXP_OUT/summarize_used.py"
+
+# {p} and {t} are substituted by benchmark.py.
+LAUNCHER='mpirun -np {p} -x LD_LIBRARY_PATH -x OMP_NUM_THREADS -x OMP_PLACES -x OMP_PROC_BIND -x OMP_DYNAMIC --map-by slot:PE={t} --bind-to core --report-bindings'
+
+raw_files=()
+
+for threads in 1 2 3 6; do
+    export OMP_NUM_THREADS="$threads"
+
+    raw="$EXP_OUT/threads_p2_t${threads}.jsonl"
+    raw_files+=("$raw")
+
+    args=(
+        --suite threads
+        --processes 2
+        --threads "$threads"
+        --n "$EXP_N"
+        --d "$EXP_D"
+        --k "$EXP_K"
+        --iterations "$EXP_ITERATIONS"
+        --warmup "$EXP_WARMUP"
+        --repeats "$EXP_REPEATS"
+        --seed "$EXP_SEED"
+        --order-seed "$EXP_ORDER_SEED"
+        --timeout 300
+        --launcher "$LAUNCHER"
+        --output "$raw"
+    )
+
+    echo "===== Dry run: P=2, T=$threads ====="
+
+    python3 -u scripts/benchmark.py \
+        "${args[@]}" \
+        --dry-run \
+        > "$EXP_OUT/commands_p2_t${threads}.jsonl"
+
+    echo "===== Benchmark: P=2, T=$threads ====="
+
+    python3 -u scripts/benchmark.py "${args[@]}"
+done
+
+echo "===== Summarizing measurements ====="
+
+python3 -u scripts/summarize.py \
+    "${raw_files[@]}" \
+    --output "$EXP_OUT/timing_summary.csv"
+
+echo "Completed. Results: $EXP_OUT"
