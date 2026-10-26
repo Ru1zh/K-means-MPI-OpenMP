@@ -1,0 +1,52 @@
+{
+  "rank": 1,
+  "p": 2,
+  "t": 1,
+  "host": "cnode-33-43-32",
+  "rank_cpus": [
+    30,
+    31,
+    32,
+    33,
+    34,
+    35
+  ],
+  "active_cpus": [
+    30
+  ],
+  "omp_places": "{30}",
+  "thread_probe": {
+    "openmp": 201511,
+    "threads": [
+      {
+        "tid": 0,
+        "current_cpu": 30,
+        "cpus": [
+          30
+        ]
+      }
+    ]
+  },
+  "command": [
+    "/home/svu/ryanrui/project3-atlas-thread-scaling/build/kmeans_mpi",
+    "--n",
+    "37",
+    "--d",
+    "3",
+    "--k",
+    "4",
+    "--seed",
+    "42",
+    "--iterations",
+    "5",
+    "--warmup",
+    "2",
+    "--variant",
+    "v2",
+    "--threads",
+    "1",
+    "--comm",
+    "allreduce",
+    "--dump"
+  ]
+}

@@ -2,6 +2,8 @@
 
 [English](report_results.en.md) | [简体中文](report_results.zh-CN.md) | [한국어](report_results.ko.md)
 
+**175 ordinary measurements; 50 separate diagnostic profiles.**
+
 All figures use the recorded synthetic workload: N=1,000,000, D=32, K=32, seed=42; 20 measured iterations after 2 warmup iterations, 5 repeats per configuration. The plotted metric is `kernel_seconds`, excluding data preparation, initialization, warmup/reset, final evaluation and external launch/probe overhead. Each comparison stays within its own job. Whiskers and bands describe observed ranges, not confidence intervals.
 
 ## Results and interpretation
@@ -13,6 +15,16 @@ Fixed 12-core layout medians ranged from 0.952300 to 0.984793 s. The observed ra
 V3 was faster than V2 at every tested layout: median runtime reductions ranged from 18.33% to 40.20%. All observed V3 times were below all observed V2 times within each matched layout. This supports the private-buffer design for this workload; it does not quantify atomic-wait or memory-bandwidth costs without profiling.
 
 Reduce+Bcast median time changes relative to Allreduce ranged from -0.08% to +1.68%. Observed ranges overlap for every layout, and the direction varies. No stable communication-strategy winner is established.
+
+### Fixed P=2 thread scaling
+
+At T=6, V2/V3 thread speedups are 3.987/5.978, with efficiencies 66.44%/99.63%. Each baseline is the same variant at P=2,T=1; efficiency divides by T, not 2T. Fifty ordinary timings and fifty independent profiles are kept separate. Profiles use every phase of the same maximum-kernel rank; accumulation includes distances and barriers, so this is not pure atomic waiting.
+
+[Details](THREAD_SCALING.md) · [Timing CSV](thread-scaling-summary.csv) · [Phase CSV](thread-scaling-phase-summary.csv)
+
+![Fixed P=2 thread scaling](Figure/thread-scaling-performance.png)
+
+![Fixed P=2 thread scaling](Figure/thread-scaling-phases.png)
 
 ## Figure captions
 
@@ -92,4 +104,19 @@ V3 Allreduce and Reduce+Bcast use matched layouts on one socket. The horizontal 
 | v3 | 4 | 3 | reduce-bcast | 0.935007 | 0.886339–0.949262 |
 | v3 | 6 | 2 | allreduce | 0.923267 | 0.889835–0.927843 |
 | v3 | 6 | 2 | reduce-bcast | 0.922502 | 0.887874–0.927026 |
+
+### Fixed P=2 thread scaling
+
+| Variant | P | T | Collective | Median (s) | Observed min–max (s) |
+|---|---:|---:|---|---:|---:|
+| v2 | 2 | 1 | allreduce | 5.932525 | 5.899510–5.961822 |
+| v2 | 2 | 2 | allreduce | 3.239149 | 3.204542–3.299726 |
+| v2 | 2 | 3 | allreduce | 2.706680 | 2.705456–2.786131 |
+| v2 | 2 | 4 | allreduce | 2.130149 | 2.114199–2.151687 |
+| v2 | 2 | 6 | allreduce | 1.488148 | 1.479371–1.503290 |
+| v3 | 2 | 1 | allreduce | 5.298626 | 5.265328–5.338572 |
+| v3 | 2 | 2 | allreduce | 2.635595 | 2.622310–2.664717 |
+| v3 | 2 | 3 | allreduce | 1.780568 | 1.749308–1.819223 |
+| v3 | 2 | 4 | allreduce | 1.323602 | 1.310441–1.343187 |
+| v3 | 2 | 6 | allreduce | 0.886366 | 0.875813–0.888638 |
 

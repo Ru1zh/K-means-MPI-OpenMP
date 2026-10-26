@@ -29,7 +29,7 @@ python3 scripts/reproduce_atlas.py
 python3 hpc/build-atlas-strategy-packages.py
 ```
 
-이 명령은 `artifacts/atlas-packages/` 아래에 독립적인 아카이브 여섯 개를 만들며,
+이 명령은 `artifacts/atlas-packages/` 아래에 독립적인 아카이브 일곱 개를 만들며,
 각 아카이브에 포함된 모든 소스 파일의 SHA-256 매니페스트를 생성합니다.
 출력 디렉터리가 이미 있으면 실행을 거부합니다. 일부 실험만 준비하거나 다른 출력 디렉터리를 사용하려면 다음과 같이 실행합니다.
 
@@ -51,9 +51,9 @@ sha256sum -c source-manifest.sha256
 qsub atlas-strong.pbs
 ```
 
-진입점 여섯 개는 `atlas-smoke.pbs`, `atlas-validation.pbs`,
+진입점 일곱 개는 `atlas-smoke.pbs`, `atlas-validation.pbs`,
 `atlas-strong.pbs`, `atlas-hybrid.pbs`, `atlas-threads.pbs`,
-`atlas-communication.pbs`입니다. 과거 스냅샷에 모두 소스 매니페스트가 있는 것은 아닙니다.
+`atlas-communication.pbs`, `atlas-thread-scaling.pbs`입니다. 과거 스냅샷에 모두 소스 매니페스트가 있는 것은 아닙니다.
 매니페스트가 없는 이전 패키지를 사용할 때는 체크섬 명령을 건너뛰세요.
 
 **체크아웃에서 `qsub hpc/atlas-strong.pbs`를 직접 제출하지 마세요.** PBS 스크립트는
@@ -93,3 +93,7 @@ HPC 단위 테스트는 기록되거나 구성된 배치를 사용하며 실제 
 현재 명령은 이 가이드에 통합되어 있습니다.
 새 패키지는 보조 도구를 평면 구조로 배치하고 실행 의존성만 포함합니다.
 저장소의 오프라인 감사는 전체 체크아웃에서 실행하세요.
+
+## 추가 고정 P 실험
+
+[P=2 스레드 확장 및 별도 단계 측정 안내](THREAD_SCALING_GUIDE.ko.md)를 참고하세요. 작업 `1028185.venus01`을 완료하고 재검증했으므로 다시 제출할 필요가 없습니다. 일반 측정 50개와 별도 진단 50개는 기존 125개와 분리해 보관했습니다. [결과와 그래프](../analysis/atlas/THREAD_SCALING.ko.md)를 참고하세요.

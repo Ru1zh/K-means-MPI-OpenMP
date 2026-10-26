@@ -48,7 +48,11 @@ def expected_configurations(kind):
         return {('v3', p, 12//p, 'allreduce') for p in (1,2,3,4,6,12)}
     if kind == 'threads':
         return {(v, p, 12//p, 'allreduce') for p in (2,4,6) for v in ('v2','v3')}
-    return {('v3', p, 12//p, comm) for p in (2,4,6) for comm in ('allreduce','reduce-bcast')}
+    if kind == 'thread-scaling':
+        return {(v, 2, t, 'allreduce') for t in (1,2,3,4,6) for v in ('v2','v3')}
+    if kind == 'communication':
+        return {('v3', p, 12//p, comm) for p in (2,4,6) for comm in ('allreduce','reduce-bcast')}
+    raise ValueError('Unknown study: '+kind)
 
 
 def summarize_study(kind, rows, workload):
@@ -119,6 +123,9 @@ def build_results(bundle):
                     continue
                 reference = lookup[('v2',row['p'],row['t'],'allreduce')]
                 reference_name = 'V2 same layout'
+            elif kind == 'thread-scaling':
+                reference = lookup[(row['variant'],2,1,'allreduce')]
+                reference_name = 'Same variant P=2 T=1'
             else:
                 if row['communication'] != 'reduce-bcast':
                     continue
@@ -126,7 +133,8 @@ def build_results(bundle):
                 reference_name = 'Allreduce same layout'
             comparison = {f:row[f] for f in ('study','job_id','variant','p','t','communication')}
             comparison['reference'] = reference_name
-            comparison.update(compare(reference['median_seconds'], row, row['p']*row['t'] if kind=='strong' else None))
+            cores = row['t'] if kind == 'thread-scaling' else row['p']*row['t'] if kind=='strong' else None
+            comparison.update(compare(reference['median_seconds'], row, cores))
             comparison['ranges_overlap'] = max(reference['min_seconds'],row['min_seconds']) <= min(reference['max_seconds'],row['max_seconds'])
             comparison['speedup_vs_v3_p1'] = None
             comparison['efficiency_vs_v3_p1'] = None
@@ -135,13 +143,14 @@ def build_results(bundle):
                 comparison.update(speedup_vs_v3_p1=speedup, efficiency_vs_v3_p1=speedup/row['p'])
             comparisons.append(comparison)
     return dict(workload=manifest['workload'], formal_records=manifest['formal_records'],
+                diagnostic_records=manifest.get('diagnostic_records', 0),
                 verified_files=file_count, groups=groups, comparisons=comparisons,
                 input_manifest_sha256=hashlib.sha256((bundle/'checksums.sha256').read_bytes()).hexdigest())
 
 
 def write_csv(path, rows):
     with path.open('w', newline='') as output:
-        writer = csv.DictWriter(output, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(output, fieldnames=list(rows[0]), lineterminator='\n')
         writer.writeheader()
         writer.writerows(rows)
 

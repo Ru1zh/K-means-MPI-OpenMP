@@ -29,7 +29,7 @@ needed for this offline analysis.
 python3 hpc/build-atlas-strategy-packages.py
 ```
 
-This builds six standalone archives under `artifacts/atlas-packages/`, with a
+This builds seven standalone archives under `artifacts/atlas-packages/`, with a
 SHA-256 manifest for every included source file. Existing output directories are
 rejected. To prepare only selected studies or use another output directory:
 
@@ -52,9 +52,9 @@ sha256sum -c source-manifest.sha256
 qsub atlas-strong.pbs
 ```
 
-The six entry points are `atlas-smoke.pbs`, `atlas-validation.pbs`,
+The seven entry points are `atlas-smoke.pbs`, `atlas-validation.pbs`,
 `atlas-strong.pbs`, `atlas-hybrid.pbs`, `atlas-threads.pbs` and
-`atlas-communication.pbs`. Historical snapshots do not all contain source
+`atlas-communication.pbs`, plus `atlas-thread-scaling.pbs`. Historical snapshots do not all contain source
 manifests; skip the checksum command if using an old package without one.
 
 **Do not submit `qsub hpc/atlas-strong.pbs` directly from a checkout.** The PBS
@@ -95,3 +95,7 @@ For actual MPI integration tests, use `make test-mpi` on a suitable system or
 submit the validation package. Historical run instructions remain in the original source snapshots
 under `benchmarks/atlas/source-packages/`; current commands are consolidated here. New packages flatten the helpers and include only the run
 dependencies; run the repository's offline audits from the full checkout.
+
+## Additional fixed-P experiment
+
+See the [P=2 thread-scaling and separate phase-timing guide](THREAD_SCALING_GUIDE.md). Job `1028185.venus01` is complete and revalidated; no resubmission is needed. Its 50 ordinary measurements and 50 separate profiles are stored by job alongside the earlier 125 in the unified archive. See the [results and figures](../analysis/atlas/THREAD_SCALING.md).

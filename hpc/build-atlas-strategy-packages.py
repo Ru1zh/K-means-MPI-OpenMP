@@ -13,13 +13,13 @@ import tarfile
 
 HPC = Path(__file__).resolve().parent
 CODE = HPC.parent
-STUDIES = ('smoke', 'validation', 'strong', 'hybrid', 'threads', 'communication')
+STUDIES = ('smoke', 'validation', 'strong', 'hybrid', 'threads', 'communication', 'thread-scaling')
 
 
 def package_files(kind):
     """Flatten HPC helpers because PBS scripts run from PBS_O_WORKDIR."""
     files = {'Makefile': (CODE/'Makefile').read_bytes()}
-    for pattern in ('README*.md', 'hpc/ATLAS_RUN_GUIDE*.md', 'src/*.cpp', 'src/*.hpp',
+    for pattern in ('README*.md', 'hpc/ATLAS_RUN_GUIDE*.md', 'hpc/THREAD_SCALING_GUIDE*.md', 'src/*.cpp', 'src/*.hpp',
                     'tests/*.py', 'examples/*.txt'):
         for path in sorted(CODE.glob(pattern)):
             files[path.relative_to(CODE).as_posix()] = path.read_bytes()
@@ -36,6 +36,12 @@ def package_files(kind):
                     'atlas-data-spec.json', 'test_atlas_strategy.py']
         files['study-default-plan.json'] = subprocess.check_output([
             sys.executable, str(HPC/'atlas-strategy-study.py'), '--kind', kind, '--dry-run'])
+    if kind == 'thread-scaling':
+        helpers += ['atlas-affinity.py', 'atlas-hybrid-launch.py', 'atlas-thread-probe.cpp',
+                    'atlas-thread-scaling.py', 'atlas-thread-scaling-launch.py',
+                    'analyze-atlas-thread-scaling.py']
+        files['study-default-plan.json'] = subprocess.check_output([
+            sys.executable, str(HPC/'atlas-thread-scaling.py'), '--dry-run'])
     for name in helpers:
         files[name] = (HPC/name).read_bytes()
     # Syntax checks run locally; Linux/MPI execution belongs to PBS.

@@ -69,3 +69,11 @@ time change and applicable efficiency. Fixed-resource efficiency cells are blank
 `statistics.json` contains full numerical values. `provenance.json` records Python,
 Matplotlib and source-script/input hashes. The checked-in files were rendered
 with Matplotlib 3.9.4; PNG layout may differ slightly with another platform/font stack.
+
+## Fixed-P=2 additions
+
+Two additional figures share this Figure directory with the five originals. Ordinary observations total 175; 50 profiles remain separate. The overview.png montage shows the original five figures only.
+
+- [Fixed-P timing and speedup](thread-scaling-performance.png) · [SVG](thread-scaling-performance.svg)
+- [Independent phase diagnosis](thread-scaling-phases.png) · [SVG](thread-scaling-phases.svg)
+- [Details](../THREAD_SCALING.md)

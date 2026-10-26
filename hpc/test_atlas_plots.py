@@ -70,13 +70,19 @@ class AtlasPlotTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             with (output/'configuration_summary.csv').open() as source:
                 rows = list(csv.DictReader(source))
-            self.assertEqual(len(rows), 25)
-            self.assertEqual(sum(int(r['repeats']) for r in rows), 125)
+            self.assertEqual(len(rows), 35)
+            self.assertEqual(sum(int(r['repeats']) for r in rows), 175)
             with (output/'comparison_summary.csv').open() as source:
                 comparisons = list(csv.DictReader(source))
             target = next(r for r in comparisons if r['study']=='strong' and r['p']=='12')
             self.assertAlmostEqual(float(target['speedup']), 11.82441896500566)
             self.assertAlmostEqual(float(target['efficiency']), 0.9853682470838051)
+            scaling = [r for r in comparisons if r['study']=='thread-scaling']
+            self.assertEqual(len(scaling), 10)
+            target = next(r for r in scaling if r['variant']=='v3' and r['t']=='6')
+            self.assertAlmostEqual(float(target['speedup']), 5.977922600950823)
+            self.assertAlmostEqual(float(target['efficiency']), 0.9963204334918038)
+            self.assertEqual(target['reference'], 'Same variant P=2 T=1')
             before = (output/'configuration_summary.csv').read_bytes()
             second = subprocess.run(command, text=True, capture_output=True)
             self.assertNotEqual(second.returncode, 0)

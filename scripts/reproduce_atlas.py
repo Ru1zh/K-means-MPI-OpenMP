@@ -40,14 +40,31 @@ def verify_bundle(bundle):
         rows = [json.loads(line) for line in raw.read_text().splitlines() if line.strip()]
         if len(rows) != study['records']:
             raise ValueError('Unexpected record count: '+kind)
+        if study.get('profile_file'):
+            profiles = [json.loads(line) for line in (bundle/study['directory']/study['profile_file']).read_text().splitlines()
+                        if line.strip()]
+            if len(profiles) != study['profile_records']:
+                raise ValueError('Unexpected profile record count: '+kind)
     if sum(s['records'] for s in manifest['studies'].values()) != manifest['formal_records']:
         raise ValueError('Formal record total differs from manifest')
+    if sum(s.get('profile_records', 0) for s in manifest['studies'].values()) != manifest.get('diagnostic_records', 0):
+        raise ValueError('Diagnostic record total differs from manifest')
     return manifest, len(expected)
 
 
 def audit_study(bundle, output, kind, study):
     """Restore the old flat layout in a new directory; originals stay intact."""
     work = output/kind
+    if kind == 'thread-scaling':
+        process = subprocess.run([sys.executable, '-B', str(ROOT/'scripts/reproduce_atlas_thread_scaling.py'),
+                                  '--bundle', str(bundle), '--output', str(work)], text=True, capture_output=True)
+        if process.returncode:
+            raise ValueError('Thread-scaling audit failed: '+process.stderr)
+        result = work/Path(study['directory']).name
+        audit = json.loads((result/'analysis.audit.json').read_text())
+        return dict(study=kind, records=audit['timing_records'], profile_records=audit['profile_records'],
+                    numerical_check=audit['numerical_check'], completeness=audit['completeness'],
+                    csv_recalculation='pass', directory=str(result.relative_to(output)))
     work.mkdir()
     source = bundle/study['directory']
     result = work/source.name
@@ -91,7 +108,8 @@ def main():
     try:
         bundle = args.bundle.resolve()
         manifest, count = verify_bundle(bundle)
-        print('Verified %d evidence files; %d formal records.'%(count, manifest['formal_records']))
+        print('Verified %d evidence files; %d formal records + %d separate profiles.'%(
+            count, manifest['formal_records'], manifest.get('diagnostic_records', 0)))
         if args.verify_only:
             return
         output = args.output.resolve()

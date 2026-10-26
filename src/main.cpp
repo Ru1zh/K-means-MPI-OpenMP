@@ -6,6 +6,11 @@
 #include <sstream>
 
 namespace {
+void write_phases(std::ostream& out, const km::Phases& phases) {
+    out << "{\"accumulate\":" << phases.accumulate << ",\"thread_merge\":" << phases.merge
+        << ",\"mpi_reduce\":" << phases.reduce << ",\"centroid_update\":" << phases.update
+        << ",\"control_bcast\":" << phases.control << '}';
+}
 void help() {
     std::cout << "Lloyd K-means: C++17 / MPI+OpenMP\n"
         "--n N --d D --k K --seed S [--skew]\n"
@@ -122,7 +127,11 @@ int main(int argc, char** argv) {
         const double data_max = rt.maximum(data_seconds), init_max = rt.maximum(init_seconds);
         const double warmup_max = rt.maximum(warmup_seconds), kernel_max = rt.maximum(kernel_seconds);
         const double eval_max = rt.maximum(evaluation_seconds), total_max = rt.maximum(total_seconds);
+        std::vector<double> profile_ranks;
         if (c.profile) {
+            // 必须先保存本地原值；诊断 gather 不计入内核/普通总耗时。
+            profile_ranks = rt.gather_profile({kernel_seconds, phases.accumulate, phases.merge,
+                                              phases.reduce, phases.update, phases.control});
             // 各阶段的最大值可能来自不同进程，不能相加当作内核总时间。
             phases.accumulate = rt.maximum(phases.accumulate); phases.merge = rt.maximum(phases.merge);
             phases.reduce = rt.maximum(phases.reduce); phases.update = rt.maximum(phases.update);
@@ -169,9 +178,25 @@ int main(int argc, char** argv) {
                 }
                 out << ']';
             }
-            if (c.profile) out << ",\"phase_seconds\":{\"accumulate\":" << phases.accumulate
-                << ",\"thread_merge\":" << phases.merge << ",\"mpi_reduce\":" << phases.reduce
-                << ",\"centroid_update\":" << phases.update << ",\"control_bcast\":" << phases.control << '}';
+            if (c.profile) {
+                out << ",\"phase_seconds\":"; write_phases(out, phases);
+                out << ",\"profile_ranks\":[";
+                int critical_rank = 0;
+                for (int rank = 0; rank < rt.size; ++rank) {
+                    const auto offset = static_cast<std::size_t>(rank) * 6;
+                    // 严格大于才替换，计时相同时保留最小 rank。
+                    if (profile_ranks[offset] > profile_ranks[static_cast<std::size_t>(critical_rank) * 6])
+                        critical_rank = rank;
+                    if (rank) out << ',';
+                    out << "{\"rank\":" << rank << ",\"kernel_seconds\":" << profile_ranks[offset]
+                        << ",\"phase_seconds\":";
+                    write_phases(out, {profile_ranks[offset + 1], profile_ranks[offset + 2],
+                                       profile_ranks[offset + 3], profile_ranks[offset + 4],
+                                       profile_ranks[offset + 5]});
+                    out << '}';
+                }
+                out << "],\"profile_critical_rank\":" << critical_rank;
+            }
             out << "}\n";
         }
         return 0;

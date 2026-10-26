@@ -90,14 +90,46 @@ def write_report_results(output, results, figures):
                   comm_min=min(c['time_change_pct'] for c in comm),comm_max=max(c['time_change_pct'] for c in comm))
     for language, words in COPY.items():
         report = '# '+words['title']+'\n\n'+navigation('report_results',True)
+        report += '**%d ordinary measurements; %d separate diagnostic profiles.**\n\n' % (
+            results['formal_records'], results.get('diagnostic_records', 0))
         report += words['intro']+'\n\n## '+words['results']+'\n\n'
         for kind in ('strong','hybrid','threads','communication'):
             report += words[kind].format(**values)+'\n\n'
+        scaling = [row for row in comparisons if row['study'] == 'thread-scaling']
+        if scaling:
+            v2 = next(row for row in scaling if row['variant'] == 'v2' and row['t'] == 6)
+            v3 = next(row for row in scaling if row['variant'] == 'v3' and row['t'] == 6)
+            heading, explanation, guide = {
+                'en': ('Fixed P=2 thread scaling',
+                       'At T=6, V2/V3 thread speedups are %.3f/%.3f, with efficiencies %.2f%%/%.2f%%. '
+                       'Each baseline is the same variant at P=2,T=1; efficiency divides by T, not 2T. '
+                       'Fifty ordinary timings and fifty independent profiles are kept separate. '
+                       'Profiles use every phase of the same maximum-kernel rank; accumulation includes distances and barriers, '
+                       'so this is not pure atomic waiting.', 'THREAD_SCALING.md'),
+                'zh-CN': ('固定 P=2 线程扩展',
+                          'T=6 时 V2/V3 的线程加速比为 %.3f/%.3f，效率为 %.2f%%/%.2f%%。'
+                          '各自基线为同一实现的 P=2、T=1；线程效率除以 T，不是 2T。'
+                          '50 条普通计时与 50 条独立诊断分别保存。诊断使用同次测量内核最慢 rank 的全部阶段，'
+                          'accumulate 含距离计算与屏障，不能直接解释为纯 atomic 等待。', 'THREAD_SCALING.zh-CN.md'),
+                'ko': ('고정 P=2 스레드 확장',
+                       'T=6에서 V2/V3 스레드 가속비는 %.3f/%.3f이고 효율은 %.2f%%/%.2f%%이다. '
+                       '각 기준은 같은 구현의 P=2,T=1이며 효율은 2T가 아닌 T로 나눈다. '
+                       '일반 측정 50개와 별도 진단 50개를 구분한다. 진단은 같은 최대 커널 시간 rank의 모든 단계를 사용한다. '
+                       'accumulate에는 거리 계산과 장벽이 포함되어 순수 atomic 대기로 해석할 수 없다.', 'THREAD_SCALING.ko.md')
+            }[language]
+            report += '### '+heading+'\n\n'+(explanation % (
+                v2['speedup'], v3['speedup'], 100*v2['efficiency'], 100*v3['efficiency']))+'\n\n'
+            report += '[Details](%s) · [Timing CSV](thread-scaling-summary.csv) · [Phase CSV](thread-scaling-phase-summary.csv)\n\n'%guide
+            for name in ('thread-scaling-performance', 'thread-scaling-phases'):
+                report += '!['+heading+'](Figure/'+name+'.png)\n\n'
         report += '## '+words['captions_heading']+'\n\n'
         for (name,_),title,caption in zip(figures,words['titles'],words['captions']):
             report += '### '+title+'\n\n!['+title+'](Figure/'+name+'.png)\n\n'+caption+'\n\n'
         report += '## '+words['tables_heading']+'\n\n'
-        for kind,title in zip(('strong','hybrid','threads','communication'),words['studies']):
+        study_titles = list(zip(('strong','hybrid','threads','communication'),words['studies']))
+        if scaling:
+            study_titles.append(('thread-scaling', heading))
+        for kind,title in study_titles:
             report += '### '+title+'\n\n'+words['table_header']+'\n|---|---:|---:|---|---:|---:|\n'
             for row in groups:
                 if row['study']==kind:

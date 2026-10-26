@@ -63,3 +63,11 @@ python3 scripts/reproduce_atlas.py --output artifacts/atlas-full-audit-new
 `comparison_summary.csv`는 각 기준을 명시하고 속도 향상, 시간 변화, 적용 가능한 효율을 기록합니다. 고정 자원 비교의 효율 셀은 비어 있습니다.
 `statistics.json`에는 전체 수치가 있습니다. `provenance.json`은 Python, Matplotlib 및 소스 스크립트/입력 해시를 기록합니다.
 체크인된 파일은 Matplotlib 3.9.4로 렌더링했습니다. 다른 플랫폼이나 글꼴 조합에서는 PNG 배치가 약간 달라질 수 있습니다.
+
+## 고정 P=2 추가 그림
+
+추가 그림 두 개를 기존 다섯 그림과 같은 Figure 폴더에 저장했다. 일반 측정은 175개이며 진단 50개는 별도이다. overview.png는 기존 다섯 그림의 모음이다.
+
+- [Fixed-P timing and speedup](thread-scaling-performance.png) · [SVG](thread-scaling-performance.svg)
+- [Independent phase diagnosis](thread-scaling-phases.png) · [SVG](thread-scaling-phases.svg)
+- [Details](../THREAD_SCALING.ko.md)

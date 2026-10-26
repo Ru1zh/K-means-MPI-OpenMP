@@ -63,3 +63,11 @@ python3 scripts/reproduce_atlas.py --output artifacts/atlas-full-audit-new
 `comparison_summary.csv` 标明每项参考，并记录加速比、时间变化及适用的效率；固定资源比较的效率单元格留空。
 `statistics.json` 包含完整数值。`provenance.json` 记录 Python、Matplotlib 以及源脚本/输入的哈希。
 已检入文件使用 Matplotlib 3.9.4 渲染；其他平台或字体组合下的 PNG 布局可能略有差异。
+
+## 固定 P=2 新增图
+
+新增两张图已与原五张图统一保存在本 Figure 目录。普通性能测量总计 175 条，50 条阶段诊断另计。overview.png 保留原五图的历史拼图。
+
+- [Fixed-P timing and speedup](thread-scaling-performance.png) · [SVG](thread-scaling-performance.svg)
+- [Independent phase diagnosis](thread-scaling-phases.png) · [SVG](thread-scaling-phases.svg)
+- [Details](../THREAD_SCALING.zh-CN.md)

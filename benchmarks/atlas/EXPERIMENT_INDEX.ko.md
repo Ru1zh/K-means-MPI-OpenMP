@@ -1,46 +1,45 @@
-# 기록된 Atlas 실험
+# 보관된 Atlas 실험
 
 [English](EXPERIMENT_INDEX.md) | [简体中文](EXPERIMENT_INDEX.zh-CN.md) | [한국어](EXPERIMENT_INDEX.ko.md)
 
-이 자료는 2026-10-25에 형제 `HPC/` 폴더에서 복사한 원본이며 **비식별 처리하지 않은** 기록이다. 호스트명, 사용자명, 작업 ID, 명령과 경로는 기록 당시 그대로 남겨 두었다. 최종 묶음은 원시 실행 기록과 실측 소스 스냅샷을 보존하며 현재 가이드로 대체된 계획 문서는 제외한다. 원본 형제 폴더는 그대로 유지했다.
-
-## 구성
+다섯 성능 실험을 동일한 폴더 구조로 통합했다. 기존 네 실험은 2026-10-25에 보관했고 고정 P=2 실험은 2026-10-27에 통합했다. 원시 실행 파일과 제출 소스 압축 파일의 바이트는 유지했다. 색인, 매니페스트와 체크섬은 새 구조에 맞춰 갱신했다. 최초 다운로드는 프로젝트 HPC 폴더에 남아 있다.
 
 ```text
-manifest.json       정식 워크로드, 기록 수와 증거 경로
-checksums.sha256    이 증거 묶음의 SHA-256 목록
-runs/               검증/파일럿과 네 가지 정식 연구를 담은 다섯 작업 디렉터리
-source-packages/    바이트 단위로 보존한 원본 독립 소스 스냅샷 여섯 개
+atlas/
+  manifest.json
+  checksums.sha256
+  runs/
+    atlas-validation.1027219.venus01/
+    atlas-strong.1027222.venus01/
+    atlas-hybrid.1027229.venus01/
+    atlas-threads.1027231.venus01/
+    atlas-communication.1027272.venus01/
+    atlas-thread-scaling.1028185.venus01/
+  source-packages/
+    project3-atlas-<study>.tar.gz
 ```
 
-| 연구 | 작업 ID | 정식 기록 | 원시 측정값 |
-| --- | --- | ---: | --- |
+| Study | Job ID | Ordinary observations | Raw measurements |
+|---|---|---:|---|
 | 강한 확장성 | 1027222.venus01 | 35 | [strong.jsonl](runs/atlas-strong.1027222.venus01/strong.jsonl) |
-| 고정 12코어 하이브리드 | 1027229.venus01 | 30 | [hybrid.jsonl](runs/atlas-hybrid.1027229.venus01/hybrid.jsonl) |
+| 12코어 고정 하이브리드 배치 | 1027229.venus01 | 30 | [hybrid.jsonl](runs/atlas-hybrid.1027229.venus01/hybrid.jsonl) |
 | V2/V3 스레드 전략 | 1027231.venus01 | 30 | [raw.jsonl](runs/atlas-threads.1027231.venus01/raw.jsonl) |
 | 통신 전략 | 1027272.venus01 | 30 | [raw.jsonl](runs/atlas-communication.1027272.venus01/raw.jsonl) |
+| 고정 P=2 스레드 확장 | 1028185.venus01 | 50 | [timing.jsonl](runs/atlas-thread-scaling.1028185.venus01/timing.jsonl) |
 
-정식 측정 125건 모두 N=1,000,000, D=32, K=32, seed=42, 고정 측정 반복 20회, 워밍업 2회, 구성당 5회 반복을 사용했다. 데이터 지문은 `7fcf2e8b0cc1a222`이다. 검증 작업 `1027219.venus01`과 더 작은 파일럿 워크로드는 별도로 보존하며 이 합계에서 제외한다.
+일반 성능 측정 175개와 별도 단계 진단 50개를 구분한다. 검증/pilot과 최신 소규모 사전 검사 20회는 성능 합계에서 제외한다.
 
-환경 기록은 실제 하드웨어, CPU 할당, 컴파일러와 MPI 버전을 명시한다. 작업마다 할당/NUMA 배치가 다르므로 동일 작업 안에서 조건이 일치하는 비교를 사용해야 한다. 하이브리드 비교는 총 12코어를 고정해 측정했으며, 새로운 직렬 강한 확장성 기준선을 제공하지 않는다. 전략 연구의 전체 규모 V0 실행은 수치 검증용 참조이며 반복 시간 측정 기준선이 아니다.
+N=1,000,000; D=32; K=32; seed=42; 20 timed iterations; 2 warmups; 5 repeats/configuration.
 
-## 분석 재현
-
-저장소 루트에서 Python 3.8+로 실행한다(표준 라이브러리만 사용):
+하나의 명령으로 다섯 실험을 검증한다. --verify-only는 무결성만 확인한다. 전체 감사는 새 출력 디렉터리에서 분석을 재생성하고 원본을 유지한다. 스레드 확장 전용 진입점은 개별 감사에도 사용할 수 있다.
 
 ```sh
-python3 scripts/reproduce_atlas.py --verify-only
-python3 scripts/reproduce_atlas.py --output artifacts/atlas-audit
+python3 -B scripts/reproduce_atlas.py --verify-only
+python3 -B scripts/reproduce_atlas.py --output artifacts/atlas-audit-new
+# Optional single-study entry point:
+python3 -B scripts/reproduce_atlas_thread_scaling.py --output artifacts/thread-scaling-audit-new
 ```
 
-무결성 검사는 `checksums.sha256`에 열거한 모든 파일을 다룬다. 두 번째 명령은 네 가지 정식 연구를 새 디렉터리에 복사하고, 각 연구의 소스 스냅샷에서 보조 프로그램 버전을 복원한 다음 원래 감사 스크립트를 다시 실행한다. 출력에는 재계산한 통계, 배치/수치 검사, 중국어 분석 보고서와 `summary.json`이 포함된다. 이 묶음을 수정하거나 HPC 시간 측정 실험을 다시 실행하지 않는다. 이미 존재하는 출력 디렉터리는 거부한다.
+최신 실험은 일반 시간 timing.jsonl과 별도 진단 profile.jsonl을 사용한다. 각 진단은 같은 표본의 최대 커널 시간 rank에 모든 단계를 귀속한다. 진단은 일반 성능 측정에 합치지 않는다. 누락된 PBS 로그와 다운로드하지 않은 실행 파일의 제한은 매니페스트의 해당 작업 항목에 기록했다.
 
-검증/파일럿 기록도 무결성 검사를 받지만, 저장된 분석은 새로 생성한 다섯 번째 감사가 아니라 역사적 증거로 유지된다. 한국어 결과 해석은 [보고서 결과](../../analysis/atlas/report_results.ko.md)와 각 작업의 `analysis.ko.md`에 있다. 각 문서에서 영어와 중국어 판으로 전환할 수 있다.
-
-## 계산 다시 실행
-
-측정에 사용한 소스를 다시 실행하려면 `source-packages/`의 원본 아카이브를 사용하고, 현재 체크아웃을 실행하려면 [패키지 빌더](../../hpc/ATLAS_RUN_GUIDE.ko.md)를 사용한다. 어느 경우든 별도로 압축을 푼 패키지 디렉터리에서 제출한다. 데이터는 메모리에서 생성하므로 대용량 입력 데이터셋을 다운로드하거나 업로드할 필요가 없다.
-
-원시 기록과 역사적 노트에 저장된 경로는 원래 실행을 설명한다. 해당 계정이나 로컬 폴더에 대한 의존성이 아니다. 새 패키지 빌더와 오프라인 분석 명령은 복제한 저장소를 기준으로 동작한다.
-
-과거 실행 지침은 원본 소스 스냅샷 아카이브 안에 남아 있다. 현재 명령은 위에서 연결한 HPC 가이드에 통합했다. `checksums.sha256`은 보존한 증거와 문서를 검사하며 정식 측정 125개는 변경하지 않았다.
+[통합 보고서 결과](../../analysis/atlas/report_results.ko.md)와 [고정 P=2 결과](../../analysis/atlas/THREAD_SCALING.ko.md)를 참고한다.

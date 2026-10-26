@@ -14,6 +14,22 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 class ReproducibilityTests(unittest.TestCase):
+    def test_unified_audit_replays_all_five_studies_without_mpi(self):
+        with tempfile.TemporaryDirectory(prefix='atlas unified audit ') as temp:
+            output = Path(temp)/'audit'
+            result = subprocess.run([sys.executable, '-B', str(ROOT/'scripts/reproduce_atlas.py'),
+                                     '--output', str(output)], text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            studies = json.loads((output/'summary.json').read_text())
+            self.assertEqual({s['study'] for s in studies},
+                             {'strong','hybrid','threads','communication','thread-scaling'})
+            self.assertEqual(sum(s['records'] for s in studies), 175)
+            self.assertEqual(sum(s.get('profile_records', 0) for s in studies), 50)
+            self.assertTrue(all(s['numerical_check']=='pass' for s in studies))
+            scaling = json.loads((output/'thread-scaling/summary.json').read_text())
+            self.assertTrue(scaling['audit_values_equivalent'])
+            self.assertTrue(scaling['generated_outputs_identical']['phase-summary.csv'])
+
     def test_packages_are_self_contained_and_existing_outputs_are_preserved(self):
         with tempfile.TemporaryDirectory(prefix='atlas package paths ') as temp:
             output = Path(temp) / 'packages'
@@ -22,7 +38,8 @@ class ReproducibilityTests(unittest.TestCase):
             result = subprocess.run(command, text=True, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             archives = sorted(output.glob('project3-atlas-*.tar.gz'))
-            self.assertEqual(len(archives), 6)
+            self.assertEqual({p.name for p in archives}, {'project3-atlas-%s.tar.gz'%kind for kind in
+                             ['smoke','validation','strong','hybrid','threads','communication','thread-scaling']})
             before = {p.name: p.read_bytes() for p in archives}
             for archive in archives:
                 prefix = archive.name[:-7] + '/'

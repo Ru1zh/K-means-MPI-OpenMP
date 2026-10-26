@@ -152,7 +152,7 @@ Benchmark records include hostnames, executable paths, launch commands, and job 
 
 ## Recorded Atlas experiments
 
-The repository includes four completed Atlas CPU studies with **125 formal measurements**, plus the validation/pilot evidence. The formal workload uses N=1,000,000, D=32, K=32, seed=42, **20 measured iterations**, 2 warmup iterations and 5 repeats/configuration; these settings differ from the generic defaults above.
+The repository includes five completed Atlas CPU studies with **175 ordinary measurements** and **50 separate diagnostic profiles**, plus the validation/pilot evidence. The formal workload uses N=1,000,000, D=32, K=32, seed=42, **20 measured iterations**, 2 warmup iterations and 5 repeats/configuration; these settings differ from the generic defaults above.
 
 ```sh
 python3 scripts/reproduce_atlas.py --verify-only
@@ -162,9 +162,13 @@ python3 hpc/build-atlas-strategy-packages.py
 
 The first two commands verify archived evidence and regenerate analyses locally without MPI or an HPC login. The third creates standalone packages for new HPC runs. See [HPC instructions](hpc/ATLAS_RUN_GUIDE.md) and [the evidence index](benchmarks/atlas/EXPERIMENT_INDEX.md). Archives preserve the source versions used for the measured jobs. New packages use the current checkout. Results retain original hostnames, usernames and paths.
 
+## New fixed-P thread-scaling study
+
+The new [P=2 thread-scaling guide](hpc/THREAD_SCALING_GUIDE.md) prepares one independent CPU job at T=1,2,3,4,6 for V2/V3: 50 ordinary measurements plus 50 separate diagnostic profiles. The earlier four studies need no rerun. Current `--profile` output retains each rank's kernel and phase times; analysis uses all phases from the maximum-kernel rank. Job `1028185.venus01` is now archived and revalidated: 50 timing measurements, 50 separate profiles and 20 small-data preflights. See the [evidence manifest](benchmarks/atlas/manifest.json) and [supplementary analysis](analysis/atlas/THREAD_SCALING.md). There are now **175 ordinary performance measurements** (125 earlier + 50 new); profiles are counted separately. Run `python3 -B scripts/reproduce_atlas_thread_scaling.py` to audit a new copy.
+
 ## Report figures and tables
 
-Five report figures are included as PNG, PDF and SVG, together with exact CSV statistics and captions in all three languages. See the [figure index](analysis/atlas/Figure/FIGURE_GUIDE.md), [overview](analysis/atlas/overview.png) and [report results](analysis/atlas/report_results.en.md). To regenerate them in a new directory after installing the optional dependencies:
+Seven report figures are included: the original five as PNG/PDF/SVG and the two fixed-P figures as PNG/SVG, together with exact CSV statistics and captions in all three languages. See the [figure index](analysis/atlas/Figure/FIGURE_GUIDE.md), [overview](analysis/atlas/overview.png) and [report results](analysis/atlas/report_results.en.md). To regenerate them in a new directory after installing the optional dependencies:
 
 ```sh
 python3 -m pip install -r requirements.txt

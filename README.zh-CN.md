@@ -152,7 +152,7 @@ python3 scripts/benchmark.py --suite communication --processes 1,2 --threads 2 \
 
 ## 已完成的 Atlas 实验与复现
 
-仓库保留四组 Atlas CPU 正式实验的 **125 条测量记录**，以及正确性验证和 pilot 记录。正式实验使用 N=1,000,000、D=32、K=32、seed=42、**20 轮计时**、2 轮预热、每配置 5 次重复，与上面的通用默认参数不同。
+仓库保留五组 Atlas CPU 正式实验的 **175 条普通测量记录**（另有 50 条独立诊断），以及正确性验证和 pilot 记录。正式实验使用 N=1,000,000、D=32、K=32、seed=42、**20 轮计时**、2 轮预热、每配置 5 次重复，与上面的通用默认参数不同。
 
 ```sh
 python3 scripts/reproduce_atlas.py --verify-only
@@ -164,9 +164,13 @@ python3 hpc/build-atlas-strategy-packages.py
 
 详见 [HPC 使用说明](hpc/ATLAS_RUN_GUIDE.zh-CN.md)、[实验文件索引](benchmarks/atlas/EXPERIMENT_INDEX.zh-CN.md)及[中文结果总览](analysis/atlas/report_results.zh-CN.md)。历史源码包保持原样，新作业包使用当前代码。实验记录按要求保留原始用户名、主机名和路径，未脱敏。
 
+## 新增固定 P 的线程扩展实验
+
+[固定 P=2 实验说明](hpc/THREAD_SCALING_GUIDE.zh-CN.md)提供一个独立 CPU 作业：T=1、2、3、4、6，对比 V2/V3，分别记录 50 条普通计时与 50 条独立阶段诊断。原来四组实验无需重跑。当前 `--profile` 保留逐 rank 内核与阶段耗时，分析使用内核最慢 rank 的全部阶段。已归档作业 `1028185.venus01`，普通计时 50 条、独立诊断 50 条及小数据预检 20 次均通过复核。新增原始证据见 [统一实验索引](benchmarks/atlas/EXPERIMENT_INDEX.zh-CN.md)，结果与图表见 [补充分析](analysis/atlas/THREAD_SCALING.zh-CN.md)。原四组 125 条与新增 50 条合计 **175 条普通性能测量**；诊断另计。运行 `python3 -B scripts/reproduce_atlas_thread_scaling.py` 可在副本上复核新增实验。
+
 ## 报告图表与统计表
 
-已生成五张英文报告图，每张提供 PNG、PDF 和 SVG，并保留精确 CSV，以及中、英、韩三语言图注。详见[图表索引](analysis/atlas/Figure/FIGURE_GUIDE.zh-CN.md)、[图表总览](analysis/atlas/overview.png)、[中文结果与图注](analysis/atlas/report_results.zh-CN.md)。安装可选绘图依赖后，可在新目录重新生成：
+已统一保存七张英文报告图：原五张为 PNG/PDF/SVG，新增固定 P 的两张为 PNG/SVG，并保留精确 CSV，以及中、英、韩三语言图注。详见[图表索引](analysis/atlas/Figure/FIGURE_GUIDE.zh-CN.md)、[图表总览](analysis/atlas/overview.png)、[中文结果与图注](analysis/atlas/report_results.zh-CN.md)。安装可选绘图依赖后，可在新目录重新生成：
 
 ```sh
 python3 -m pip install -r requirements.txt

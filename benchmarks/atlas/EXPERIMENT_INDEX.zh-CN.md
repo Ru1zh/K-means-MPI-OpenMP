@@ -2,45 +2,44 @@
 
 [English](EXPERIMENT_INDEX.md) | [简体中文](EXPERIMENT_INDEX.zh-CN.md) | [한국어](EXPERIMENT_INDEX.ko.md)
 
-这些是于 2026-10-25 从同级 `HPC/` 文件夹复制的原始、**未经脱敏**的记录。主机名、用户名、作业 ID、命令和路径均保留原始记录。最终证据包保留原始运行记录和实测源码快照，省略已被当前指南替代的规划说明。同级原始文件夹保持不变。
-
-## 内容
+五组性能实验统一使用同一目录结构。旧四组在 2026-10-25 归档，固定 P=2 实验在 2026-10-27 合并。原始 runs 文件及历史源码包逐字节保留，索引、清单和校验表随目录合并更新。原始下载仍保留在项目的 HPC 目录。
 
 ```text
-manifest.json       正式工作负载、记录数量和证据路径
-checksums.sha256    此证据包的 SHA-256 清单
-runs/               五个作业目录：验证/试验及四项正式研究
-source-packages/    六份原始独立源码快照，逐字节保留
+atlas/
+  manifest.json
+  checksums.sha256
+  runs/
+    atlas-validation.1027219.venus01/
+    atlas-strong.1027222.venus01/
+    atlas-hybrid.1027229.venus01/
+    atlas-threads.1027231.venus01/
+    atlas-communication.1027272.venus01/
+    atlas-thread-scaling.1028185.venus01/
+  source-packages/
+    project3-atlas-<study>.tar.gz
 ```
 
-| 研究 | 作业 ID | 正式记录 | 原始测量 |
-| --- | --- | ---: | --- |
+| Study | Job ID | Ordinary observations | Raw measurements |
+|---|---|---:|---|
 | 强扩展 | 1027222.venus01 | 35 | [strong.jsonl](runs/atlas-strong.1027222.venus01/strong.jsonl) |
 | 固定 12 核混合并行 | 1027229.venus01 | 30 | [hybrid.jsonl](runs/atlas-hybrid.1027229.venus01/hybrid.jsonl) |
 | V2/V3 线程策略 | 1027231.venus01 | 30 | [raw.jsonl](runs/atlas-threads.1027231.venus01/raw.jsonl) |
 | 通信策略 | 1027272.venus01 | 30 | [raw.jsonl](runs/atlas-communication.1027272.venus01/raw.jsonl) |
+| 固定 P=2 线程扩展 | 1028185.venus01 | 50 | [timing.jsonl](runs/atlas-thread-scaling.1028185.venus01/timing.jsonl) |
 
-全部 125 条正式测量均使用 N=1,000,000、D=32、K=32、seed=42，固定计时 20 轮、预热 2 轮，每配置重复 5 次。数据指纹为 `7fcf2e8b0cc1a222`。验证作业 `1027219.venus01` 及其较小规模试验工作负载单独保留，不计入该总数。
+175 条普通性能测量；50 条独立阶段诊断另计。验证/pilot 与最新 20 次小数据预检不计入普通性能测量。
 
-环境记录标明了实际硬件、CPU 分配、编译器和 MPI 版本。不同作业的分配/NUMA 布局不同；请使用同一作业内匹配的比较。混合并行比较固定总核数为 12，不提供新的串行强扩展基线。策略研究中的全规模 V0 运行是数值参考，并非重复计时基线。
+N=1,000,000; D=32; K=32; seed=42; 20 timed iterations; 2 warmups; 5 repeats/configuration.
 
-## 复现分析
-
-在仓库根目录使用 Python 3.8+ 运行（仅使用标准库）：
+一次命令复核全部五组。只检查文件完整性使用 --verify-only；完整复核在新目录重算，原始记录不变。最新实验的专门入口仍可用于单项复核。
 
 ```sh
-python3 scripts/reproduce_atlas.py --verify-only
-python3 scripts/reproduce_atlas.py --output artifacts/atlas-audit
+python3 -B scripts/reproduce_atlas.py --verify-only
+python3 -B scripts/reproduce_atlas.py --output artifacts/atlas-audit-new
+# Optional single-study entry point:
+python3 -B scripts/reproduce_atlas_thread_scaling.py --output artifacts/thread-scaling-audit-new
 ```
 
-完整性检查覆盖 `checksums.sha256` 中列出的全部文件。第二条命令将四项正式研究复制到新目录，从各项研究的源码快照恢复辅助程序版本，并重新运行原始审计脚本。输出包括重新计算的统计量、布局/数值核查、中文分析报告和 `summary.json`。它不会修改此证据包，也不会重新运行 HPC 计时实验。已存在的输出目录会被拒绝。
+最新一组的阶段数据为 profile.jsonl，普通计时为 timing.jsonl。每条诊断使用同次测量的内核最慢 rank 的全部阶段，不能把诊断并入普通计时。缺失 PBS 快照/外层日志和二进制未下载的限制见 manifest.json 中该作业条目。
 
-验证/试验记录接受完整性检查；其已保存分析仍作为历史证据，而不是重新生成的第五份审计。中文结果解读见[报告结果](../../analysis/atlas/report_results.zh-CN.md)和各作业的 `analysis.zh-CN.md`。
-
-## 重新运行计算
-
-使用 `source-packages/` 中的原始归档重新运行实测源码，或使用[打包工具](../../hpc/ATLAS_RUN_GUIDE.zh-CN.md)运行当前检出版本。两种方式均应从单独解压的包目录提交。数据在内存中生成，无需下载或上传大型输入数据集。
-
-原始记录和历史笔记中保存的路径描述原始运行情况，并不依赖那些账户或本地文件夹。新的打包工具和离线分析命令相对于克隆后的仓库工作。
-
-历史运行说明仍保存在原始源码快照归档内。当前命令统一见上方 HPC 使用指南。`checksums.sha256` 覆盖保留的证据和文档；125 条正式测量保持不变。
+说明与结果见 [统一报告结果](../../analysis/atlas/report_results.zh-CN.md) 和 [固定 P=2 说明](../../analysis/atlas/THREAD_SCALING.zh-CN.md)。

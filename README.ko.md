@@ -152,7 +152,7 @@ python3 scripts/benchmark.py --suite communication --processes 1,2 --threads 2 \
 
 ## 완료된 Atlas 실험과 재현
 
-저장소에는 Atlas CPU 실험 네 종류의 **정식 측정 기록 125개**와 검증 및 파일럿 기록이 포함되어 있습니다. 정식 실험은 N=1,000,000, D=32, K=32, seed=42, **측정 반복 20회**, 워밍업 2회, 구성별 실행 5회를 사용합니다. 위의 일반 기본값과 구분하세요.
+저장소에는 Atlas CPU 실험 다섯 종류의 **일반 측정 기록 175개**와 **별도 진단 50개**와 검증 및 파일럿 기록이 포함되어 있습니다. 정식 실험은 N=1,000,000, D=32, K=32, seed=42, **측정 반복 20회**, 워밍업 2회, 구성별 실행 5회를 사용합니다. 위의 일반 기본값과 구분하세요.
 
 ```sh
 python3 scripts/reproduce_atlas.py --verify-only
@@ -164,9 +164,13 @@ python3 hpc/build-atlas-strategy-packages.py
 
 자세한 내용은 [HPC 실행 안내](hpc/ATLAS_RUN_GUIDE.ko.md)와 [실험 기록 색인](benchmarks/atlas/EXPERIMENT_INDEX.ko.md)을 참고하세요. 원본 소스 패키지는 당시 버전을 보존하고 새 패키지는 현재 코드를 사용합니다. 실험 기록의 사용자명, 호스트명과 경로는 익명화하지 않고 그대로 보존했습니다.
 
+## 새 고정 P 스레드 확장 실험
+
+[P=2 실험 안내](hpc/THREAD_SCALING_GUIDE.ko.md)는 T=1,2,3,4,6에서 V2/V3를 비교하는 독립 CPU 작업 하나를 준비합니다. 일반 측정 50개와 별도 단계 진단 50개를 기록하며 기존 네 실험은 다시 실행할 필요가 없습니다. 현재 `--profile`은 rank별 커널 및 단계 시간을 보존하고 분석은 커널 시간이 가장 큰 rank의 모든 단계를 사용합니다. 작업 `1028185.venus01`의 일반 측정 50개, 별도 진단 50개, 소규모 사전 검사 20회를 보관하고 재검증했습니다. [원본 목록](benchmarks/atlas/manifest.json)과 [추가 분석](analysis/atlas/THREAD_SCALING.ko.md)을 참고하세요. 일반 성능 측정은 기존 125개를 포함하여 **총 175개**이며 진단은 별도 집계합니다. `python3 -B scripts/reproduce_atlas_thread_scaling.py`로 복사본을 검증할 수 있습니다.
+
 ## 보고서 그래프와 통계표
 
-보고서용 영문 그래프 다섯 개를 PNG, PDF, SVG로 제공합니다. 정확한 CSV 통계와 영어·중국어·한국어 그림 설명도 포함됩니다. [그래프 색인](analysis/atlas/Figure/FIGURE_GUIDE.ko.md), [전체 미리보기](analysis/atlas/overview.png), [결과와 그림 설명](analysis/atlas/report_results.ko.md)을 참고하세요. 선택적 의존성을 설치한 뒤 새 디렉터리에 다시 생성할 수 있습니다.
+보고서용 영문 그래프는 총 7개입니다. 기존 5개는 PNG/PDF/SVG, 고정 P 실험의 추가 2개는 PNG/SVG입니다. 정확한 CSV 통계와 영어·중국어·한국어 그림 설명도 포함됩니다. [그래프 색인](analysis/atlas/Figure/FIGURE_GUIDE.ko.md), [전체 미리보기](analysis/atlas/overview.png), [결과와 그림 설명](analysis/atlas/report_results.ko.md)을 참고하세요. 선택적 의존성을 설치한 뒤 새 디렉터리에 다시 생성할 수 있습니다.
 
 ```sh
 python3 -m pip install -r requirements.txt

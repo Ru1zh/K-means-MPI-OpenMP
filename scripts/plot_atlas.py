@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 from pathlib import Path
 import sys
 
@@ -261,15 +262,30 @@ def main():
         output.mkdir(parents=True,exist_ok=False)
         write_tables(output,results)
         write_report_results(output,results,FIGURES)
+        manifest = json.loads((bundle/'manifest.json').read_text())
+        if 'thread-scaling' in manifest['studies']:
+            run = bundle/manifest['studies']['thread-scaling']['directory']
+            for source, target in [('thread-scaling-summary.csv', 'thread-scaling-summary.csv'),
+                                   ('phase-summary.csv', 'thread-scaling-phase-summary.csv'),
+                                   ('analysis.md', 'THREAD_SCALING.md'),
+                                   ('analysis.zh-CN.md', 'THREAD_SCALING.zh-CN.md'),
+                                   ('analysis.ko.md', 'THREAD_SCALING.ko.md')]:
+                shutil.copy2(run/source, output/target)
         version = render_figures(output,results) if not args.tables_only else None
+        if not args.tables_only and any(row['study'] == 'thread-scaling' for row in results['groups']):
+            from plot_atlas_thread_scaling import render
+            render(output/'Figure', bundle)
         provenance = dict(python=sys.version,matplotlib=version,formal_records=results['formal_records'],
+                          diagnostic_records=results.get('diagnostic_records', 0),
                           input_manifest_sha256=results['input_manifest_sha256'],
                           scripts_sha256={name:hashlib.sha256((ROOT/'scripts'/name).read_bytes()).hexdigest()
-                                          for name in ('atlas_results.py','atlas_report_text.py','plot_atlas.py','reproduce_atlas.py')})
+                                          for name in ('atlas_results.py','atlas_report_text.py','plot_atlas.py',
+                                                       'plot_atlas_thread_scaling.py','reproduce_atlas.py')})
         (output/'provenance.json').write_text(json.dumps(provenance,indent=2)+'\n')
         print('Verified %d evidence files; summarized %d records in %d configurations.'%(
             results['verified_files'],results['formal_records'],len(results['groups'])))
-        print('Wrote %s to %s'%('tables and report results' if args.tables_only else '5 figures (PNG/PDF/SVG), tables and report results',output))
+        print('Wrote %s to %s'%('tables and report results' if args.tables_only else
+              '5 original figures (PNG/PDF/SVG), 2 fixed-P figures (PNG/SVG), tables and report results',output))
     except (OSError,ValueError,KeyError) as error:
         parser.exit(1,'Error: %s\n'%error)
 

@@ -2,6 +2,8 @@
 
 [English](report_results.en.md) | [简体中文](report_results.zh-CN.md) | [한국어](report_results.ko.md)
 
+**175 ordinary measurements; 50 separate diagnostic profiles.**
+
 所有图均使用已记录的合成工作负载：N=1,000,000、D=32、K=32、seed=42；2 轮预热后计时 20 轮，每配置重复 5 次。图中指标为 `kernel_seconds`，不含数据准备、初始化、预热/重置、最终评估及外部启动/绑核探针开销。所有比较均限于同一作业。须线和色带表示实测范围，不是置信区间。
 
 ## 结果与解释
@@ -13,6 +15,16 @@ V0 串行中位耗时为 11.232365 s，V3 在 12 个 MPI 进程时为 0.949930 s
 在全部所测配比中 V3 均快于 V2，中位耗时下降 18.33%–40.20%。每个匹配配比的全部 V3 观测都低于全部 V2 观测。这支持在本工作负载中使用私有缓冲；缺少阶段 profile，不能定量归因为原子等待或内存带宽成本。
 
 Reduce+Bcast 相对 Allreduce 的中位耗时变化为 -0.08%–+1.68%。每种配比的实测范围均重叠，变化方向也不一致，没有稳定的通信策略胜者。
+
+### 固定 P=2 线程扩展
+
+T=6 时 V2/V3 的线程加速比为 3.987/5.978，效率为 66.44%/99.63%。各自基线为同一实现的 P=2、T=1；线程效率除以 T，不是 2T。50 条普通计时与 50 条独立诊断分别保存。诊断使用同次测量内核最慢 rank 的全部阶段，accumulate 含距离计算与屏障，不能直接解释为纯 atomic 等待。
+
+[Details](THREAD_SCALING.zh-CN.md) · [Timing CSV](thread-scaling-summary.csv) · [Phase CSV](thread-scaling-phase-summary.csv)
+
+![固定 P=2 线程扩展](Figure/thread-scaling-performance.png)
+
+![固定 P=2 线程扩展](Figure/thread-scaling-phases.png)
 
 ## 图注
 
@@ -92,4 +104,19 @@ V3 的 Allreduce 与 Reduce+Bcast 在一个 socket 上使用匹配配比。横�
 | v3 | 4 | 3 | reduce-bcast | 0.935007 | 0.886339–0.949262 |
 | v3 | 6 | 2 | allreduce | 0.923267 | 0.889835–0.927843 |
 | v3 | 6 | 2 | reduce-bcast | 0.922502 | 0.887874–0.927026 |
+
+### 固定 P=2 线程扩展
+
+| 版本 | P | T | 集合通信 | 中位耗时 (s) | 实测最小–最大 (s) |
+|---|---:|---:|---|---:|---:|
+| v2 | 2 | 1 | allreduce | 5.932525 | 5.899510–5.961822 |
+| v2 | 2 | 2 | allreduce | 3.239149 | 3.204542–3.299726 |
+| v2 | 2 | 3 | allreduce | 2.706680 | 2.705456–2.786131 |
+| v2 | 2 | 4 | allreduce | 2.130149 | 2.114199–2.151687 |
+| v2 | 2 | 6 | allreduce | 1.488148 | 1.479371–1.503290 |
+| v3 | 2 | 1 | allreduce | 5.298626 | 5.265328–5.338572 |
+| v3 | 2 | 2 | allreduce | 2.635595 | 2.622310–2.664717 |
+| v3 | 2 | 3 | allreduce | 1.780568 | 1.749308–1.819223 |
+| v3 | 2 | 4 | allreduce | 1.323602 | 1.310441–1.343187 |
+| v3 | 2 | 6 | allreduce | 0.886366 | 0.875813–0.888638 |
 

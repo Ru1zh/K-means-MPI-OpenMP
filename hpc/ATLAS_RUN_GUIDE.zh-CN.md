@@ -27,7 +27,7 @@ python3 scripts/reproduce_atlas.py
 python3 hpc/build-atlas-strategy-packages.py
 ```
 
-该命令会在 `artifacts/atlas-packages/` 下构建六个独立归档包，并为每个包内的全部源文件生成 SHA-256 清单。
+该命令会在 `artifacts/atlas-packages/` 下构建七个独立归档包，并为每个包内的全部源文件生成 SHA-256 清单。
 如果输出目录已经存在，命令会拒绝执行。若只准备部分研究或使用其他输出目录：
 
 ```sh
@@ -48,9 +48,9 @@ sha256sum -c source-manifest.sha256
 qsub atlas-strong.pbs
 ```
 
-六个入口分别是 `atlas-smoke.pbs`、`atlas-validation.pbs`、
+七个入口分别是 `atlas-smoke.pbs`、`atlas-validation.pbs`、
 `atlas-strong.pbs`、`atlas-hybrid.pbs`、`atlas-threads.pbs` 和
-`atlas-communication.pbs`。历史快照并非都包含源文件校验清单；
+`atlas-communication.pbs`，以及 `atlas-thread-scaling.pbs`。历史快照并非都包含源文件校验清单；
 使用不含清单的旧包时，跳过校验和命令。
 
 **不要直接从检出目录提交 `qsub hpc/atlas-strong.pbs`。** PBS 脚本要求源文件和辅助工具共同位于
@@ -88,3 +88,7 @@ HPC 单元测试使用已记录或构造的布局，不会提交真实 PBS 作�
 如需实际的 MPI 集成测试，请在适当系统上使用 `make test-mpi`，或提交验证包。
 历史运行说明保存在 `benchmarks/atlas/source-packages/` 的原始源码快照内；当前命令统一使用本指南。
 新包将辅助工具平铺放置，且只包含运行依赖；仓库的离线审计应从完整检出目录运行。
+
+## 新增固定 P 实验
+
+详见[固定 P=2 线程扩展与独立阶段计时说明](THREAD_SCALING_GUIDE.zh-CN.md)。作业 `1028185.venus01` 已完成并复核通过，无需重新提交。新增 50 条普通计时、50 条独立诊断与原四组 125 条在统一目录中按作业保存；[结果与图表](../analysis/atlas/THREAD_SCALING.zh-CN.md)已整理。
