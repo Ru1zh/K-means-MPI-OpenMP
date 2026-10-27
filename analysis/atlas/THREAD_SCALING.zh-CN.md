@@ -44,7 +44,7 @@ accumulate 包含清零、距离计算、更新和 OpenMP 屏障，MPI reduce �
 - 完整英文分析 [analysis.md](thread-scaling-results.en.md)、中文 [analysis.zh-CN.md](thread-scaling-results.zh-CN.md)、韩文 [analysis.ko.md](thread-scaling-results.ko.md)。
 - [原始证据](../../benchmarks/atlas/EXPERIMENT_INDEX.zh-CN.md)及确切提交源码包与其他四组一起归档，下载原目录也保留。
 - 图源 `../../scripts/plot_atlas_thread_scaling.py`；图表另存 SVG。运行需 Code/requirements.txt 中的 Matplotlib。
-- 报告可直接采用的英文补充稿见 [Thread_Scaling_Addendum_20261027.md](../../../Report/Thread_Scaling_Addendum_20261027.md)。旧 PDF/旧交付包未包含本实验，未覆盖。
+- 该实验已合入[正式报告](https://docs.google.com/document/d/17KY4NESQ0XsDnSXgqbnsXNcBrn2BaMSpjH3vj5lSWdc/edit)的 5.5–5.6 节和图 6–7。
 
 在 Code 根目录复核：
 
