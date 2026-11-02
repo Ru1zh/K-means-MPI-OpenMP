@@ -1,7 +1,5 @@
 # Atlas 보고서 그림과 표
 
-[English](FIGURE_GUIDE.md) | [简体中文](FIGURE_GUIDE.zh-CN.md) | [한국어](FIGURE_GUIDE.ko.md)
-
 [그림 개요](../overview.png) 또는
 [한국어 결과·캡션·표](../report_results.ko.md)를 여세요.
 

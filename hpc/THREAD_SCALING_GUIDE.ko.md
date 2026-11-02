@@ -1,7 +1,5 @@
 # 고정 P=2 스레드 확장과 별도 단계 시간 측정
 
-[English](THREAD_SCALING_GUIDE.md) | [简体中文](THREAD_SCALING_GUIDE.zh-CN.md) | [한국어](THREAD_SCALING_GUIDE.ko.md)
-
 **CPU 작업 하나를 새로 실행**한다. 기존 네 실험의 125개 기록은 유효하며 다시 실행할 필요가 없다. GPU나 데이터 다운로드도 필요 없다. 작업 `1028185.venus01`을 완료했으며 일반 측정 50개, 별도 진단 50개 및 소규모 사전 검사 20회를 로컬에서 재검증했다. 다시 제출할 필요가 없다. [결과](../analysis/atlas/THREAD_SCALING.ko.md)와 [원본 목록](../benchmarks/atlas/manifest.json)을 참고한다. 아래 제출 절차는 향후 재현용이며 다운로드한 기록은 `python3 -B scripts/reproduce_atlas_thread_scaling.py`로 검증한다.
 
 ## 실험 설계

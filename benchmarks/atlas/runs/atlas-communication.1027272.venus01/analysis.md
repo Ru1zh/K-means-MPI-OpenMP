@@ -1,7 +1,5 @@
 # Atlas V3 communication-strategy comparison results
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 Job `1027272.venus01`, 2026-10-24 (Singapore time), node `cnode-33-43-32`. Strategy comparisons use only timings from matched configurations within this job.
 
 ## Verification findings

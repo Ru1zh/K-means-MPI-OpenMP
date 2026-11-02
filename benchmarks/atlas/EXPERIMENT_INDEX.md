@@ -1,7 +1,5 @@
 # Recorded Atlas experiments
 
-[English](EXPERIMENT_INDEX.md) | [简体中文](EXPERIMENT_INDEX.zh-CN.md) | [한국어](EXPERIMENT_INDEX.ko.md)
-
 Five performance studies now share one directory layout. The earlier four were archived on 25 October 2026; the fixed-P=2 study was merged on 27 October. Raw run files and submitted source archives remain byte-for-byte intact. Indexes, the manifest and checksums were updated for this layout migration. Original downloads remain in the project HPC folder.
 
 ```text

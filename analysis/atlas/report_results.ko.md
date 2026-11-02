@@ -1,7 +1,5 @@
 # 보고서용 Atlas 실험 결과
 
-[English](report_results.en.md) | [简体中文](report_results.zh-CN.md) | [한국어](report_results.ko.md)
-
 **175 ordinary measurements; 50 separate diagnostic profiles.**
 
 모든 그림은 기록된 합성 작업 부하 N=1,000,000, D=32, K=32, seed=42를 사용합니다. 준비 반복 2회 후 20회를 측정하며, 구성마다 5회 반복 실행합니다. 표시 지표는 `kernel_seconds`로, 데이터 준비, 초기화, 준비 반복/초기 상태 복원, 최종 평가 및 외부 실행/바인딩 탐침의 비용은 제외합니다. 모든 비교는 동일 작업 내에서만 수행합니다. 수염과 음영은 관측 범위이며 신뢰구간이 아닙니다.

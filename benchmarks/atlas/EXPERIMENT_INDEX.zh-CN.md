@@ -1,7 +1,5 @@
 # 已记录的 Atlas 实验
 
-[English](EXPERIMENT_INDEX.md) | [简体中文](EXPERIMENT_INDEX.zh-CN.md) | [한국어](EXPERIMENT_INDEX.ko.md)
-
 五组性能实验统一使用同一目录结构。旧四组在 2026-10-25 归档，固定 P=2 实验在 2026-10-27 合并。原始 runs 文件及历史源码包逐字节保留，索引、清单和校验表随目录合并更新。原始下载仍保留在项目的 HPC 目录。
 
 ```text

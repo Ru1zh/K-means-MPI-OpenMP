@@ -1,7 +1,5 @@
 # Atlas CPU validation and initial trial results
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 Job: `1027219.venus01`. This document analyzes only this job's output, without combining earlier small examples that lacked binding.
 
 ## Conclusions

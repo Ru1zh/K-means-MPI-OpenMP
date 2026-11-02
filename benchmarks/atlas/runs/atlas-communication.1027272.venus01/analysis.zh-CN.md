@@ -1,7 +1,5 @@
 # Atlas V3 通信策略对照结果
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 作业 `1027272.venus01`，2026-10-24（新加坡时间），节点 `cnode-33-43-32`。仅使用本作业内匹配配置的时间进行策略对照。
 
 ## 核查结论

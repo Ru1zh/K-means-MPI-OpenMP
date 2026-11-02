@@ -1,7 +1,5 @@
 # 固定 P=2 的线程扩展与独立阶段计时
 
-[English](THREAD_SCALING_GUIDE.md) | [简体中文](THREAD_SCALING_GUIDE.zh-CN.md) | [한국어](THREAD_SCALING_GUIDE.ko.md)
-
 这是**一个新增 CPU 作业**。原来四组实验的 125 条记录仍然有效，无需为本次扩展重跑。无需 GPU，也无需下载数据。作业 `1028185.venus01` 已完成，50 条普通计时、50 条独立诊断及 20 次小数据预检已归档并通过本地复核，无需重新提交。见[结果说明](../analysis/atlas/THREAD_SCALING.zh-CN.md)及[独立归档](../benchmarks/atlas/EXPERIMENT_INDEX.zh-CN.md)。以下提交步骤供未来复现实验使用；复核已下载结果请运行 `python3 -B scripts/reproduce_atlas_thread_scaling.py`。
 
 ## 实验设计

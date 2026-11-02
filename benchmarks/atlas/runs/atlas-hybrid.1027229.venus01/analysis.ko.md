@@ -1,7 +1,5 @@
 # Atlas 고정 12코어 MPI+OpenMP 구성 결과
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 작업 `1027229.venus01`, 2026-10-24, 노드 `cnode-33-43-45`. 이 분석은 동일 작업 안에서 12코어를 고정한 여섯 V3 구성만 비교한다.
 
 ## 검증 결론

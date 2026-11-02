@@ -1,7 +1,5 @@
 # Atlas 实验
 
-[English](ATLAS_RUN_GUIDE.md) | [简体中文](ATLAS_RUN_GUIDE.zh-CN.md) | [한국어](ATLAS_RUN_GUIDE.ko.md)
-
 本目录包含 PBS 作业入口、CPU 亲和性工具和运行包准备工具。
 归档测量数据和原始源代码快照位于
 [benchmarks/atlas](../benchmarks/atlas/EXPERIMENT_INDEX.zh-CN.md)。

@@ -1,7 +1,5 @@
 # Atlas report figures and tables
 
-[English](FIGURE_GUIDE.md) | [简体中文](FIGURE_GUIDE.zh-CN.md) | [한국어](FIGURE_GUIDE.ko.md)
-
 Open [the figure overview](../overview.png) or
 [English results, captions and tables](../report_results.en.md).
 

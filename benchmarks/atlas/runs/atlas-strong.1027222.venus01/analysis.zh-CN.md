@@ -1,7 +1,5 @@
 # Atlas V3 单节点进程强扩展结果
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 作业 `1027222.venus01`，2026-10-24，计算节点 `cnode-33-43-39`。分析仅使用本作业数据，不与 N=100000 的前次 pilot 合并。
 
 ## 核查结果

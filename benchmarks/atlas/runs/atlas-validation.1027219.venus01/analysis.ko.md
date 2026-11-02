@@ -1,7 +1,5 @@
 # Atlas CPU 검증과 첫 시험 결과
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 작업: `1027219.venus01`. 이 문서는 해당 작업의 출력만 분석하며, 앞서 바인딩 없이 실행한 작은 예제는 합치지 않는다.
 
 ## 결론

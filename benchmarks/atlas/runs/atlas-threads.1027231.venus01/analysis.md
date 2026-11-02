@@ -1,7 +1,5 @@
 # Atlas V2/V3 thread-accumulation strategy comparison results
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 Job `1027231.venus01`, 2026-10-24, node `cnode-33-43-39`. Strategy comparisons use only timings from matched configurations within this job.
 
 ## Verification findings

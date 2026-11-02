@@ -1,7 +1,5 @@
 # Atlas 报告图表
 
-[English](FIGURE_GUIDE.md) | [简体中文](FIGURE_GUIDE.zh-CN.md) | [한국어](FIGURE_GUIDE.ko.md)
-
 打开[图表总览](../overview.png)或
 [中文结果、图注和表格](../report_results.zh-CN.md)。
 

@@ -1,7 +1,5 @@
 # Atlas V3 single-node process strong-scaling results
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 Job `1027222.venus01`, 2026-10-24, compute node `cnode-33-43-39`. The analysis uses only data from this job, without combining it with the earlier N=100000 pilot.
 
 ## Verification results

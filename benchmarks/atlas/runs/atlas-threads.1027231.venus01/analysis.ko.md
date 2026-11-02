@@ -1,7 +1,5 @@
 # Atlas V2/V3 스레드 누적 전략 비교 결과
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 작업 `1027231.venus01`, 2026-10-24, 노드 `cnode-33-43-39`. 전략 비교에는 이 작업 안에서 조건이 일치하는 구성의 시간만 사용한다.
 
 ## 검증 결론

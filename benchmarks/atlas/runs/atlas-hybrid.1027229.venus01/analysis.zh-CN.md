@@ -1,7 +1,5 @@
 # Atlas 固定 12 核的 MPI+OpenMP 配比结果
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 作业 `1027229.venus01`，2026-10-24，节点 `cnode-33-43-45`。本分析仅比较同一作业内固定 12 核的六种 V3 配比。
 
 ## 核查结论

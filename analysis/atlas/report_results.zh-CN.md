@@ -1,7 +1,5 @@
 # 报告所用 Atlas 实验结果
 
-[English](report_results.en.md) | [简体中文](report_results.zh-CN.md) | [한국어](report_results.ko.md)
-
 **175 ordinary measurements; 50 separate diagnostic profiles.**
 
 所有图均使用已记录的合成工作负载：N=1,000,000、D=32、K=32、seed=42；2 轮预热后计时 20 轮，每配置重复 5 次。图中指标为 `kernel_seconds`，不含数据准备、初始化、预热/重置、最终评估及外部启动/绑核探针开销。所有比较均限于同一作业。须线和色带表示实测范围，不是置信区间。

@@ -1,7 +1,5 @@
 # Atlas CPU 验证与首次试验结果
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 作业：`1027219.venus01`。本文只分析该作业的输出，不合并此前未绑核的小样例。
 
 ## 结论

@@ -1,7 +1,5 @@
 # Atlas MPI+OpenMP layout results with 12 fixed cores
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 Job `1027229.venus01`, 2026-10-24, node `cnode-33-43-45`. This analysis compares only the six V3 layouts using 12 fixed cores within the same job.
 
 ## Verification findings

@@ -1,7 +1,5 @@
 # Atlas V2/V3 线程累加策略对照结果
 
-[English](analysis.md) | [简体中文](analysis.zh-CN.md) | [한국어](analysis.ko.md)
-
 作业 `1027231.venus01`，2026-10-24，节点 `cnode-33-43-39`。仅使用本作业内匹配配置的时间进行策略对照。
 
 ## 核查结论

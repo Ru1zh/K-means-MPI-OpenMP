@@ -1,7 +1,5 @@
 # Atlas results for the report
 
-[English](report_results.en.md) | [简体中文](report_results.zh-CN.md) | [한국어](report_results.ko.md)
-
 **175 ordinary measurements; 50 separate diagnostic profiles.**
 
 All figures use the recorded synthetic workload: N=1,000,000, D=32, K=32, seed=42; 20 measured iterations after 2 warmup iterations, 5 repeats per configuration. The plotted metric is `kernel_seconds`, excluding data preparation, initialization, warmup/reset, final evaluation and external launch/probe overhead. Each comparison stays within its own job. Whiskers and bands describe observed ranges, not confidence intervals.

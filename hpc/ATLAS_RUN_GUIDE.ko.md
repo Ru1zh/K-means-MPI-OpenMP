@@ -1,7 +1,5 @@
 # Atlas 실험
 
-[English](ATLAS_RUN_GUIDE.md) | [简体中文](ATLAS_RUN_GUIDE.zh-CN.md) | [한국어](ATLAS_RUN_GUIDE.ko.md)
-
 이 디렉터리에는 PBS 작업 진입점, CPU affinity 도구, 실행 패키지 준비 도구가 있습니다.
 보관된 측정값과 원본 소스 스냅샷은
 [benchmarks/atlas](../benchmarks/atlas/EXPERIMENT_INDEX.ko.md)에 있습니다.

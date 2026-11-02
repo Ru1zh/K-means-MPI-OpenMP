@@ -1,7 +1,5 @@
 # Atlas experiments
 
-[English](ATLAS_RUN_GUIDE.md) | [简体中文](ATLAS_RUN_GUIDE.zh-CN.md) | [한국어](ATLAS_RUN_GUIDE.ko.md)
-
 This directory contains PBS entry points, CPU affinity tools and package preparation.
 Archived measurements and original source snapshots are in
 [benchmarks/atlas](../benchmarks/atlas/EXPERIMENT_INDEX.md).
