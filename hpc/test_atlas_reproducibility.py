@@ -13,6 +13,8 @@ import unittest
 ROOT = Path(__file__).resolve().parent.parent
 
 
+@unittest.skipUnless((ROOT/'benchmarks/atlas').is_dir(),
+                     'archived evidence bundle is not included in this code-only branch')
 class ReproducibilityTests(unittest.TestCase):
     def test_unified_audit_replays_all_five_studies_without_mpi(self):
         with tempfile.TemporaryDirectory(prefix='atlas unified audit ') as temp:

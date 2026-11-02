@@ -1,6 +1,6 @@
 # Fixed P=2 thread scaling and separate phase timing
 
-This is **one new CPU job**. The four archived studies and their 125 measurements remain valid; do not rerun them for this extension. No GPU or data download is required. Job `1028185.venus01` has completed and passed local revalidation: 50 ordinary measurements, 50 separate profiles and 20 small-data preflights. No resubmission is needed. See the [results](../analysis/atlas/THREAD_SCALING.md) and [evidence manifest](../benchmarks/atlas/manifest.json). Submission steps below are for future replication; recheck downloaded evidence with `python3 -B scripts/reproduce_atlas_thread_scaling.py`.
+This is **one new CPU job**. The four archived studies and their 125 measurements remain valid; do not rerun them for this extension. No GPU or data download is required. Job `1028185.venus01` has completed and passed local revalidation: 50 ordinary measurements, 50 separate profiles and 20 small-data preflights. No resubmission is needed. The archived results and evidence manifest are available in the full repository. Submission steps below are for future replication; recheck downloaded evidence with `python3 -B scripts/reproduce_atlas_thread_scaling.py`.
 
 ## Design
 

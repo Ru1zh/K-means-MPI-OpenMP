@@ -1,1 +1,0 @@
-taskset --cpu-list 60 /hpctmp/ryanrui/project3-atlas-communication/build/kmeans_serial --n 1000000 --d 32 --k 32 --seed 42 --iterations 20 --warmup 2

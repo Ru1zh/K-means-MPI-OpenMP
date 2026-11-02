@@ -1,8 +1,8 @@
 # Atlas experiments
 
 This directory contains PBS entry points, CPU affinity tools and package preparation.
-Archived measurements and original source snapshots are in
-[benchmarks/atlas](../benchmarks/atlas/EXPERIMENT_INDEX.md).
+Archived measurements and original source snapshots are not included in this code-only
+snapshot; they are available in the full repository.
 
 ## Recheck the recorded experiments locally
 
@@ -37,7 +37,7 @@ python3 hpc/build-atlas-strategy-packages.py --studies threads communication \
 ```
 
 These new packages contain the **current checkout**. For the exact source used
-in the recorded jobs, use `benchmarks/atlas/source-packages/` instead. Do not
+in the recorded jobs, use the archived source packages in the full repository. Do not
 replace the archived packages with newly generated ones.
 
 Transfer the desired archive to Atlas using your normal file transfer method.
@@ -91,9 +91,9 @@ make test
 HPC unit tests use recorded/constructed layouts and do not submit real PBS jobs.
 For actual MPI integration tests, use `make test-mpi` on a suitable system or
 submit the validation package. Historical run instructions remain in the original source snapshots
-under `benchmarks/atlas/source-packages/`; current commands are consolidated here. New packages flatten the helpers and include only the run
+in the full repository; current commands are consolidated here. New packages flatten the helpers and include only the run
 dependencies; run the repository's offline audits from the full checkout.
 
 ## Additional fixed-P experiment
 
-See the [P=2 thread-scaling and separate phase-timing guide](THREAD_SCALING_GUIDE.md). Job `1028185.venus01` is complete and revalidated; no resubmission is needed. Its 50 ordinary measurements and 50 separate profiles are stored by job alongside the earlier 125 in the unified archive. See the [results and figures](../analysis/atlas/THREAD_SCALING.md).
+See the [P=2 thread-scaling and separate phase-timing guide](THREAD_SCALING_GUIDE.md). Job `1028185.venus01` is complete and revalidated; no resubmission is needed. Its 50 ordinary measurements and 50 separate profiles are stored by job alongside the earlier 125 in the unified archive. The results and figures are available in the full repository.

@@ -24,6 +24,8 @@ def plotting_module():
         sys.path.pop(0)
 
 
+@unittest.skipUnless((ROOT/'benchmarks/atlas').is_dir(),
+                     'archived evidence bundle is not included in this code-only branch')
 class AtlasPlotTests(unittest.TestCase):
     def test_median_and_observed_ranges_are_not_means_or_confidence_intervals(self):
         self.assertTrue((ROOT/'scripts/plot_atlas.py').exists(), 'Plotting entry point is missing')

@@ -146,46 +146,21 @@ Raw JSONL and stderr logs are saved separately. CSV summaries report median/mini
 - `--trace` and `--profile` add diagnostic work and are rejected by the benchmark summary. Separate phase maxima cannot be added to reconstruct total time.
 - Strong-scaling speedup is `t_serial / t_parallel`; efficiency is `speedup / (P * T)`. Weak-scaling efficiency compares `P=1` and `P>1` with fixed samples and threads per process. Use matching workloads and environments.
 
-Benchmark records include hostnames, executable paths, launch commands, and job IDs. New results, external datasets, local notes, credentials, caches, and build outputs are excluded by `.gitignore`; the retained evidence under `benchmarks/atlas/` is explicitly included.
+Benchmark records include hostnames, executable paths, launch commands, and job IDs. Generated results, external datasets, local notes, credentials, caches, and build outputs are excluded by `.gitignore`.
 
-## Recorded Atlas experiments
+## Archived results
 
-The repository includes five completed Atlas CPU studies with **175 ordinary measurements** and **50 separate diagnostic profiles**, plus the validation/pilot evidence. The formal workload uses N=1,000,000, D=32, K=32, seed=42, **20 measured iterations**, 2 warmup iterations and 5 repeats/configuration; these settings differ from the generic defaults above.
-
-```sh
-python3 scripts/reproduce_atlas.py --verify-only
-python3 scripts/reproduce_atlas.py
-python3 hpc/build-atlas-strategy-packages.py
-```
-
-The first two commands verify archived evidence and regenerate analyses locally without MPI or an HPC login. The third creates standalone packages for new HPC runs. See [HPC instructions](hpc/ATLAS_RUN_GUIDE.md) and [the evidence index](benchmarks/atlas/EXPERIMENT_INDEX.md). Archives preserve the source versions used for the measured jobs. New packages use the current checkout. Results retain original hostnames, usernames and paths.
-
-## New fixed-P thread-scaling study
-
-The new [P=2 thread-scaling guide](hpc/THREAD_SCALING_GUIDE.md) prepares one independent CPU job at T=1,2,3,4,6 for V2/V3: 50 ordinary measurements plus 50 separate diagnostic profiles. The earlier four studies need no rerun. Current `--profile` output retains each rank's kernel and phase times; analysis uses all phases from the maximum-kernel rank. Job `1028185.venus01` is now archived and revalidated: 50 timing measurements, 50 separate profiles and 20 small-data preflights. See the [evidence manifest](benchmarks/atlas/manifest.json) and [supplementary analysis](analysis/atlas/THREAD_SCALING.md). There are now **175 ordinary performance measurements** (125 earlier + 50 new); profiles are counted separately. Run `python3 -B scripts/reproduce_atlas_thread_scaling.py` to audit a new copy.
-
-## Report figures and tables
-
-Seven report figures are included: the original five as PNG/PDF/SVG and the two fixed-P figures as PNG/SVG, together with exact CSV statistics and captions. See the [figure index](analysis/atlas/Figure/FIGURE_GUIDE.md), [overview](analysis/atlas/overview.png) and [report results](analysis/atlas/report_results.md). To regenerate them in a new directory after installing the optional dependencies:
-
-```sh
-python3 -m pip install -r requirements.txt
-python3 scripts/plot_atlas.py --output artifacts/atlas-figures-new
-```
-
-Only rendering needs Matplotlib. `--tables-only` derives statistics and all three documentation language editions with the standard library. Whiskers show observed ranges, not confidence intervals; comparisons stay within each job and use explicitly named baselines.
+This code-only snapshot does not include the archived Atlas measurements, report figures, or generated tables. The analysis and reproduction scripts in `scripts/` and `hpc/` expect an evidence bundle that is available in the full repository; point them at one with `--bundle` (for example, `python3 scripts/reproduce_atlas.py --bundle <path> --verify-only`).
 
 ## Repository layout
 
 ```text
 src/          C++ algorithm, data generation, MPI runtime, JSON output
-scripts/      Benchmark runner and CSV summary
-tests/       Numerical and experiment-tool tests
+scripts/      Benchmark runner, CSV summary, Atlas analysis and reproduction tools
+tests/        Numerical and experiment-tool tests
 examples/     Small input with a hand-computed expected result
 hpc/          PBS scripts, placement tools and standalone package builder
-benchmarks/   Original Atlas results, source snapshots and audit evidence
-analysis/     Report figures, exact tables, captions and reproduction guide
 Makefile      Serial/parallel builds and tests
 ```
 
-OpenAI Codex assisted with the implementation, tests, and documentation. Recorded Atlas results are included with their original evidence; new performance claims require measurements on the target system.
+OpenAI Codex assisted with the implementation, tests, and documentation. New performance claims require measurements on the target system.
