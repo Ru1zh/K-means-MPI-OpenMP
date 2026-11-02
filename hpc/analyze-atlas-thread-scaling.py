@@ -19,7 +19,7 @@ WORKLOAD = ('n', 'd', 'k', 'seed', 'iterations', 'warmup')
 FORMAL_WORKLOAD = dict(n=1000000, d=32, k=32, seed=42, iterations=20, warmup=2)
 SMALL_WORKLOAD = dict(n=37, d=3, k=4, seed=42, iterations=5, warmup=2)
 OUTPUTS = ('thread-scaling-summary.csv', 'phase-summary.csv', 'analysis.audit.json',
-           'analysis.md', 'analysis.zh-CN.md', 'analysis.ko.md')
+           'analysis.md')
 PHASE_NOTE = ('Each profile sample uses all five phases from its maximum-kernel rank; '
               'ties select the smaller rank. Independent phase maxima across ranks are never summed. '
               'This decomposition does not directly measure pure atomic waiting time.')
@@ -397,7 +397,8 @@ def analyze(directory):
                                 for path in sorted(folder.rglob('*')) if path.is_file() and path.name not in OUTPUTS})
     contents = {'thread-scaling-summary.csv': csv_text(summaries), 'phase-summary.csv': csv_text(phases),
                 'analysis.audit.json': json.dumps(audit, indent=2, allow_nan=False) + '\n'}
-    contents.update(make_reports(audit, plan, summaries, phases))
+    reports = make_reports(audit, plan, summaries, phases)
+    contents.update({name: text for name, text in reports.items() if name == 'analysis.md'})
     # All validation and serialization finish before touching any generated output.
     for name, content in contents.items():
         (folder / name).write_text(content)

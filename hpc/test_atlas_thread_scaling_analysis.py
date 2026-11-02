@@ -147,7 +147,7 @@ class ThreadScalingAnalysisTests(unittest.TestCase):
         self.assertEqual(audit['preflight_check'], 'pass')
         for field in ('completeness', 'numerical_check', 'placement_check'):
             self.assertEqual(audit[field], 'pass')
-        for name in ('analysis.md', 'analysis.zh-CN.md', 'analysis.ko.md'):
+        for name in ('analysis.md',):
             text = (self.folder / name).read_text()
             self.assertIn('123.cluster', text)
             self.assertIn('14.000000', text)

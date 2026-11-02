@@ -267,9 +267,7 @@ def main():
             run = bundle/manifest['studies']['thread-scaling']['directory']
             for source, target in [('thread-scaling-summary.csv', 'thread-scaling-summary.csv'),
                                    ('phase-summary.csv', 'thread-scaling-phase-summary.csv'),
-                                   ('analysis.md', 'THREAD_SCALING.md'),
-                                   ('analysis.zh-CN.md', 'THREAD_SCALING.zh-CN.md'),
-                                   ('analysis.ko.md', 'THREAD_SCALING.ko.md')]:
+                                   ('analysis.md', 'THREAD_SCALING.md')]:
                 shutil.copy2(run/source, output/target)
         version = render_figures(output,results) if not args.tables_only else None
         if not args.tables_only and any(row['study'] == 'thread-scaling' for row in results['groups']):

@@ -12,7 +12,7 @@ from reproduce_atlas import verify_bundle
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUTS = ('thread-scaling-summary.csv', 'phase-summary.csv', 'analysis.audit.json',
-           'analysis.md', 'analysis.zh-CN.md', 'analysis.ko.md')
+           'analysis.md')
 
 
 def digest(path):
@@ -81,12 +81,15 @@ def main():
         audit = json.loads((result / 'analysis.audit.json').read_text())
         # PBS writes status.txt in the exit trap, after the original analysis.
         # A later local analysis therefore inventories one additional input file.
-        received_inputs = received_audit.pop('source_sha256')
-        regenerated_inputs = audit['source_sha256'].copy()
+        def english_only(inventory):
+            return {name: value for name, value in inventory.items()
+                    if not name.endswith(('.zh-CN.md', '.ko.md'))}
+        received_inputs = english_only(received_audit.pop('source_sha256'))
+        regenerated_inputs = english_only(audit['source_sha256'])
         added_status = ('status.txt' not in received_inputs
                         and regenerated_inputs.pop('status.txt', None) == digest(run / 'status.txt'))
         equivalent_audit = (received_audit == {k: v for k, v in audit.items() if k != 'source_sha256'}
-                            and (received_inputs == audit['source_sha256']
+                            and (received_inputs == english_only(audit['source_sha256'])
                                  or (added_status and received_inputs == regenerated_inputs)))
         if not all(value for name, value in matches.items() if name != 'analysis.audit.json') or not equivalent_audit:
             raise ValueError('Regenerated output differs: ' + str(matches))

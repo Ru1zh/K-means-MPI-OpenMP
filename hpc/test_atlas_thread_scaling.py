@@ -98,7 +98,7 @@ class ThreadStudyTests(unittest.TestCase):
         for name in ['atlas-thread-scaling.pbs','atlas-thread-scaling.py','atlas-thread-scaling-launch.py',
                      'analyze-atlas-thread-scaling.py','atlas-affinity.py','atlas-hybrid-launch.py',
                      'atlas-thread-probe.cpp','Makefile','src/main.cpp','study-default-plan.json',
-                     'hpc/THREAD_SCALING_GUIDE.md','hpc/THREAD_SCALING_GUIDE.zh-CN.md','hpc/THREAD_SCALING_GUIDE.ko.md']:
+                     'hpc/THREAD_SCALING_GUIDE.md']:
             self.assertIn(name,files)
         self.assertEqual(json.loads(files['study-default-plan.json'])['expected_profile_records'],50)
 

@@ -40,4 +40,4 @@ python3 -B scripts/reproduce_atlas_thread_scaling.py --output artifacts/thread-s
 
 The latest study uses timing.jsonl for ordinary observations and profile.jsonl for separate profiles. Every profile attributes all phases to its same-sample maximum-kernel rank. Diagnostics are not performance observations. Missing PBS history/stdout and absent executable binaries are documented in this study’s manifest entry.
 
-See [unified report results](../../analysis/atlas/report_results.en.md) and the [fixed-P=2 study](../../analysis/atlas/THREAD_SCALING.md).
+See [unified report results](../../analysis/atlas/report_results.md) and the [fixed-P=2 study](../../analysis/atlas/THREAD_SCALING.md).

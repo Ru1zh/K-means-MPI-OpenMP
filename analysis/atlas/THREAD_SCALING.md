@@ -3,7 +3,7 @@
 Job `1028185.venus01` is complete. Its 50 ordinary timing observations, 50 independent profiles and 20 small-data preflights passed local revalidation. All five studies share benchmarks/atlas and analysis/atlas, while each job retains its own raw records: 175 ordinary performance measurements in total; profiles are not added to the performance sample count.
 
 - [Current report](https://docs.google.com/document/d/17KY4NESQ0XsDnSXgqbnsXNcBrn2BaMSpjH3vj5lSWdc/edit)
-- [Timing and profile tables](thread-scaling-results.en.md)
+- [Timing and profile tables](thread-scaling-results.md)
 - [Local audit summary](thread-scaling-local-review.json)
 - [Evidence manifest](../../benchmarks/atlas/manifest.json)
 

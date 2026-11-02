@@ -68,11 +68,6 @@ COPY = {
 }
 
 
-def navigation(base, explicit_english=False):
-    english = base + ('.en.md' if explicit_english else '.md')
-    return '[English](%s) | [简体中文](%s.zh-CN.md) | [한국어](%s.ko.md)\n\n' % (english, base, base)
-
-
 def write_report_results(output, results, figures):
     """Use common numeric values/table rows so translations cannot drift numerically."""
     groups, comparisons = results['groups'], results['comparisons']
@@ -89,7 +84,9 @@ def write_report_results(output, results, figures):
                   thread_min=min(-c['time_change_pct'] for c in threads),thread_max=max(-c['time_change_pct'] for c in threads),
                   comm_min=min(c['time_change_pct'] for c in comm),comm_max=max(c['time_change_pct'] for c in comm))
     for language, words in COPY.items():
-        report = '# '+words['title']+'\n\n'+navigation('report_results',True)
+        if language != 'en':
+            continue
+        report = '# '+words['title']+'\n\n'
         report += '**%d ordinary measurements; %d separate diagnostic profiles.**\n\n' % (
             results['formal_records'], results.get('diagnostic_records', 0))
         report += words['intro']+'\n\n## '+words['results']+'\n\n'
@@ -137,4 +134,4 @@ def write_report_results(output, results, figures):
                     report += '| %s | %d | %d | %s | %.6f | %.6f–%.6f |\n' % (
                         row['variant'],row['p'],row['t'],collective,row['median_seconds'],row['min_seconds'],row['max_seconds'])
             report += '\n'
-        (output/('report_results.'+language+'.md')).write_text(report,encoding='utf-8')
+        (output/'report_results.md').write_text(report,encoding='utf-8')

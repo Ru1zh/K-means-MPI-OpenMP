@@ -1,7 +1,7 @@
 # Atlas report figures and tables
 
 Open [the figure overview](../overview.png) or
-[English results, captions and tables](../report_results.en.md).
+[English results, captions and tables](../report_results.md).
 
 The five figures are available as 300 dpi PNG, vector PDF and editable-text SVG:
 

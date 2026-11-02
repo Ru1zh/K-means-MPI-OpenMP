@@ -166,7 +166,7 @@ The new [P=2 thread-scaling guide](hpc/THREAD_SCALING_GUIDE.md) prepares one ind
 
 ## Report figures and tables
 
-Seven report figures are included: the original five as PNG/PDF/SVG and the two fixed-P figures as PNG/SVG, together with exact CSV statistics and captions. See the [figure index](analysis/atlas/Figure/FIGURE_GUIDE.md), [overview](analysis/atlas/overview.png) and [report results](analysis/atlas/report_results.en.md). To regenerate them in a new directory after installing the optional dependencies:
+Seven report figures are included: the original five as PNG/PDF/SVG and the two fixed-P figures as PNG/SVG, together with exact CSV statistics and captions. See the [figure index](analysis/atlas/Figure/FIGURE_GUIDE.md), [overview](analysis/atlas/overview.png) and [report results](analysis/atlas/report_results.md). To regenerate them in a new directory after installing the optional dependencies:
 
 ```sh
 python3 -m pip install -r requirements.txt
