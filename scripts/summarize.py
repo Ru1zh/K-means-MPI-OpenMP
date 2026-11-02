@@ -7,7 +7,7 @@ import math
 import statistics
 from pathlib import Path
 
-# 参数、输入指纹、二进制和环境共同定义可比较的一组，不能只按 P、T 合并时间。
+# Parameters, input fingerprint, binary and environment together define a comparable group; never merge times by P and T alone.
 KEYS = ['run_id', 'suite', 'n', 'd', 'k', 'p', 't', 'nodes', 'variant', 'communication',
         'mode', 'seed', 'skew', 'iterations', 'warmup', 'data_fingerprint', 'init_indices',
         'compiler', 'mpi_version', 'omp_places', 'omp_proc_bind', 'binding_note',
@@ -28,13 +28,13 @@ def main():
             row = json.loads(line)
             # Older runs predate explicit serial launcher/affinity recording.
             row.setdefault('serial_launcher', '')
-            # trace/profile 增加额外工作，收敛模式轮数可变，均不能混入固定工作量比较。
+            # trace/profile add extra work and convergence mode varies the iteration count, so neither may be mixed into fixed-work comparisons.
             if row['diagnostic'] or row['mode'] != 'fixed':
                 raise ValueError('Summary accepts only fixed-work, non-diagnostic measurements')
             if not math.isfinite(row['kernel_seconds']) or row['kernel_seconds'] <= 0:
                 raise ValueError('Invalid kernel time')
             key = tuple(json.dumps(row[k], sort_keys=True) for k in KEYS)
-            # 同一配置的同一次 repeat 只能计数一次，拒绝重叠输入文件虚增样本量。
+            # Count a given repeat of the same configuration only once; reject overlapping input files that would inflate the sample count.
             identity = key + (row['repeat'],)
             if identity in seen:
                 raise ValueError('Duplicate measurement: overlapping inputs or repeated run/configuration/repeat')
@@ -49,7 +49,7 @@ def main():
         writer.writeheader()
         for rows in groups.values():
             times = [r['kernel_seconds'] for r in rows]
-            # 中位数描述典型耗时，范围保留波动信息；同时输出 SSE 范围检查质量变化。
+            # The median describes typical time while the range retains variability; also emit the SSE range to check quality changes.
             summary = {k: rows[0][k] for k in KEYS}
             summary.update(q=rows[0]['p'] * rows[0]['t'], repeats=len(rows),
                            median_seconds=statistics.median(times), min_seconds=min(times), max_seconds=max(times),

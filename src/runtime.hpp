@@ -15,8 +15,8 @@
 #endif
 
 namespace km {
-// 封装通信与生命周期；串行构建使用本地操作，和并行构建共享同一算法流程。
-// MPI 调用均由初始化 MPI 的主线程执行，不能从 OpenMP 工作线程调用这些方法。
+// Encapsulate communication and lifecycle; the serial build uses local operations and shares the same algorithm flow.
+// MPI calls are made only by the thread that initialized MPI and must not be called from OpenMP worker threads.
 class Runtime {
 public:
     int rank = 0, size = 1, nodes = 1;
@@ -24,7 +24,7 @@ public:
     Runtime(int& argc, char**& argv) {
 #ifdef KM_MPI
         int provided = 0;
-        // FUNNELED 允许 OpenMP 计算线程存在，但 MPI 调用必须由初始化线程执行。
+        // FUNNELED allows OpenMP compute threads but requires MPI calls to be made by the initializing thread.
         MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank); MPI_Comm_size(MPI_COMM_WORLD, &size);
         if (provided < MPI_THREAD_FUNNELED) fail("MPI_THREAD_FUNNELED unavailable");
@@ -33,7 +33,7 @@ public:
         // Some implementations count the C terminator in the returned length.
         library.erase(std::find(library.begin(), library.end(), '\0'), library.end());
         MPI_Comm shared;
-        // 每个共享内存通信域选一个代表，汇总代表数量作为实际节点数。
+        // Choose one representative per shared-memory communicator and sum the representative count as the actual node count.
         MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL, &shared);
         int local_rank; MPI_Comm_rank(shared, &local_rank);
         int leader = local_rank == 0;
@@ -51,7 +51,7 @@ public:
     [[noreturn]] void fail(const std::string& message) const {
         std::cerr << "rank " << rank << ": " << message << '\n';
 #ifdef KM_MPI
-        // 单个进程退出会让其他进程卡在集合通信中，因此错误时终止整个通信域。
+        // A single process exiting would leave others blocked in collective calls, so errors abort the whole communicator.
         MPI_Abort(MPI_COMM_WORLD, 1);
 #endif
         std::exit(1);
@@ -111,7 +111,7 @@ public:
         (void)values;
 #endif
     }
-    // all=true 时所有进程收到结果，否则仅 root 收到；SSE 由调用方按需单独归约。
+    // When all=true every process receives the result; otherwise only root does; SSE is reduced separately by the caller when needed.
     void reduce(Stats& stats, Stats& global, bool all) const {
 #ifdef KM_MPI
         const int len = static_cast<int>(stats.sums.size()), k = static_cast<int>(stats.counts.size());
@@ -131,8 +131,8 @@ public:
         std::vector<double> local(elements(p.size, c.d));
 #ifdef KM_MPI
         std::vector<int> lengths(size), offsets(size);
-        // Scatterv 的长度和偏移按 double 元素数计算，而不是按样本数或字节数。
-        // read_data 已限制 N*D<=INT_MAX，因此这里转换为 int 是安全的。
+        // Scatterv lengths and displacements are in double elements, not samples or bytes.
+        // read_data already enforces N*D<=INT_MAX, so the conversion to int is safe here.
         for (int r = 0; r < size; ++r) {
             const auto part = partition(c.n, r, size);
             lengths[r] = static_cast<int>(elements(part.size, c.d));
@@ -147,7 +147,7 @@ public:
     }
     std::vector<int> gather_labels(const std::vector<int>& local, Count n) const {
 #ifdef KM_MPI
-        // 仅 --dump 的小数据路径收集标签，正常大规模测量只归约统计量。
+        // Only the small-data --dump path collects labels; normal large measurements reduce statistics only.
         std::vector<int> result(rank == 0 ? static_cast<std::size_t>(n) : 0);
         std::vector<int> lengths(size), offsets(size);
         for (int r = 0; r < size; ++r) {
@@ -161,7 +161,7 @@ public:
         (void)n; return local;
 #endif
     }
-    // 内核结束后收集本地 kernel + 五阶段原值；root 按 rank 顺序接收。
+    // After the kernel, collect local kernel + five phase originals; root receives them in rank order.
     std::vector<double> gather_profile(const std::array<double, 6>& local) const {
 #ifdef KM_MPI
         std::vector<double> result(rank == 0 ? static_cast<std::size_t>(size) * local.size() : 0);
@@ -174,7 +174,7 @@ public:
     }
     int configure_threads(int requested) const {
 #ifdef KM_MPI
-        // 关闭动态缩小线程组；若资源限制使任一进程未达到请求线程数，统一报错。
+        // Disable dynamic team shrinking; if resource limits prevent any process from reaching the requested thread count, fail uniformly.
         omp_set_dynamic(0); omp_set_num_threads(requested);
         int observed = 0;
         #pragma omp parallel num_threads(requested)

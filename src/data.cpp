@@ -14,7 +14,7 @@
 namespace km {
 namespace {
 template<class T> T integer(const std::string& s) {
-    // 要求整个字符串均为整数，拒绝溢出和 "9x" 一类部分可解析的输入。
+    // Require the whole string to be an integer; reject overflow and partially parsed inputs such as "9x".
     T value{};
     const auto r = std::from_chars(s.data(), s.data() + s.size(), value);
     if (r.ec != std::errc{} || r.ptr != s.data() + s.size())
@@ -32,16 +32,16 @@ double uniform(std::uint64_t x) {
     return (static_cast<double>(mix(x) >> 12) + 0.5) * 0x1p-52;
 }
 void sample(const Config& c, Count id, double* out) {
-    // 随机量只由种子、全局样本编号和维度确定；改变 MPI 分区不会改变数据。
+    // Random values depend only on the seed, global sample index and dimension; changing the MPI partition does not change the data.
     const auto key = mix(c.seed ^ mix(static_cast<std::uint64_t>(id)));
     const double choice = uniform(key);
-    // 生成簇数固定为 16，与求解时的 K 独立；偏斜模式将 90% 概率给第 0 簇。
+    // The generator always uses 16 clusters, independent of K; skew mode assigns 90% probability to cluster 0.
     const int group = c.skew ? (choice < 0.9 ? 0 : 1 + std::min(14, int((choice - 0.9) * 150)))
                              : std::min(15, int(choice * 16));
     for (int j = 0; j < c.d; ++j) {
         const auto axis = mix(key ^ mix(static_cast<std::uint64_t>(j) + 1));
         const double center = 20 * (uniform(c.seed ^ mix(0x12340000ULL + group * 131ULL + j)) - 0.5);
-        // Box–Muller 将两个均匀随机量变成标准正态噪声，加入该簇固定中心。
+        // Box-Muller turns two uniform random values into standard normal noise and adds the cluster's fixed center.
         out[j] = center + std::sqrt(-2 * std::log(uniform(axis))) *
                  std::cos(6.2831853071795864769 * uniform(axis ^ 0xabcd0123456789ULL));
     }
@@ -85,7 +85,7 @@ Config parse(int argc, char** argv, bool parallel) {
     return c;
 }
 std::size_t elements(Count n, int d) {
-    // 先用除法检查字节数范围，再做乘法，避免分配前的整数溢出。
+    // Check the byte-count range with division first, then multiply, to avoid integer overflow before allocation.
     if (n < 0 || d <= 0 || static_cast<std::uint64_t>(n) >
         std::numeric_limits<std::size_t>::max() / sizeof(double) / static_cast<unsigned>(d))
         throw std::runtime_error("Array size overflow");
@@ -106,7 +106,7 @@ void validate(const Config& c) {
         throw std::runtime_error("dump/trace restricted to N and K*D <= 100000");
 }
 Partition partition(Count n, int rank, int size) {
-    // 余数分给前 rem 个进程，样本数最多相差 1；P>N 时后续进程持有空区间。
+    // Give the remainder to the first rem processes so sample counts differ by at most 1; when P>N later processes own empty ranges.
     const Count base = n / size, rem = n % size;
     return {rank * base + std::min<Count>(rank, rem), base + (rank < rem)};
 }
@@ -117,7 +117,7 @@ std::vector<double> read_data(const std::string& path, Count& n, int& d) {
     n = integer<Count>(ns); d = integer<int>(ds);
     if (n <= 0 || d <= 0) throw std::runtime_error("Invalid file dimensions");
     const auto len = elements(n, d);
-    // 文本输入使用传统 Scatterv，其 count/displacement 为 int；大数据走直接生成。
+    // Text input uses traditional Scatterv whose count/displacement are int; large data uses direct generation.
     if (len > INT_MAX) throw std::runtime_error("Text input limited to INT_MAX elements; use generated data for larger runs");
     std::vector<double> data(len);
     for (double& value : data) {
@@ -141,16 +141,16 @@ std::vector<Count> initial_indices(const Config& c) {
         while (std::getline(stream, token, ',')) ids.push_back(integer<Count>(token));
         if (c.init_spec.back() == ',') throw std::runtime_error("Empty initial index");
     } else {
-        // Floyd 无放回抽样，时间/空间为 O(K)，K=N 时也无需反复尝试抽取未用编号。
+        // Floyd sampling without replacement is O(K) in time and space and needs no repeated attempts even when K=N.
         std::mt19937_64 rng(c.seed);
         for (Count j = c.n - c.k; j < c.n; ++j) {
             const auto bound = static_cast<std::uint64_t>(j) + 1;
-            // 拒绝不能均匀分成 bound 份的低端随机值，消除直接取模的抽样偏差。
+            // Reject low random values that cannot be split evenly into bound parts, removing modulo sampling bias.
             const auto threshold = -bound % bound;
             std::uint64_t value;
             do { value = rng(); } while (value < threshold);
             Count id = static_cast<Count>(value % bound);
-            // 发生碰撞时选 j；前面的轮次尚未选到 j，因此仍保证编号唯一。
+            // On collision choose j; earlier rounds have not selected j yet, so uniqueness is preserved.
             if (selected.count(id)) id = j;
             selected.insert(id); ids.push_back(id);
         }
@@ -172,8 +172,8 @@ std::vector<double> initial_centers(const Config& c, const std::vector<Count>& i
     return centers;
 }
 std::uint64_t fingerprint(const std::vector<double>& data, Count first, int d) {
-    // 将坐标位模式与全局位置一起混合，再 XOR：跨进程归约后与分区方式无关。
-    // 这是数据一致性检查指纹，不是密码学哈希。
+    // Mix coordinate bit patterns with the global position, then XOR: after cross-process reduction the result is independent of partitioning.
+    // This is a data-consistency fingerprint, not a cryptographic hash.
     std::uint64_t result = 0;
     const auto start = static_cast<std::uint64_t>(first) * static_cast<unsigned>(d);
     for (std::size_t i = 0; i < data.size(); ++i) {

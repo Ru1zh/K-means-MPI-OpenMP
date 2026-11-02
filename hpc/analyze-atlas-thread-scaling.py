@@ -277,28 +277,7 @@ def make_reports(audit, plan, summaries, phases):
             'waiting time. Cells below show median seconds and median percentages; their independent medians need not '
             'sum to the median kernel or 100%. Residual is kernel minus that rank’s phase sum.\n\n',
             'Raw inputs are read-only; rerun `python3 hpc/analyze-atlas-thread-scaling.py RESULT_DIRECTORY` to regenerate.\n'),
-        'analysis.zh-CN.md': ('# Atlas 固定 P 线程扩展\n\n',
-            '工作量、数值、实验矩阵与核心布局核查全部通过，包括覆盖两种测量模式的 20 次小样本预检及其标签、质心核查。'
-            '这是新增的独立作业，不能与旧作业的时间直接横比。'
-            'V0 仅作为数值参考。\n\n正式计时仅采用 diagnostic=false 的 timing 记录。加速比为同一 variant 的 T=1 '
-            '中位时间除以当前 T 中位时间；线程效率为加速比/T。最小–最大范围不是置信区间。\n\n',
-            '独立诊断 profile 样本不混入正式计时。每个样本使用内核耗时最大 rank 的全部阶段，平局取较小 rank；'
-            '百分比分母为该 rank 的内核时间。不能把跨 rank 的阶段最大值相加，也不能将此分解视为纯 atomic 等待时间。'
-            '下表各项为秒数中位数和百分比中位数，它们独立计算，合计不一定等于内核中位数或 100%。'
-            'residual 为该 rank 内核时间减去其阶段和。\n\n',
-            '原始输入只读；使用 `python3 hpc/analyze-atlas-thread-scaling.py RESULT_DIRECTORY` 可重新生成分析。\n'),
-        'analysis.ko.md': ('# Atlas 고정 P 스레드 확장\n\n',
-            '워크로드, 수치 결과, 실험 구성 및 CPU 배치 검증과 두 측정 모드의 소규모 사전 검사 20회의 라벨 및 중심 검증을 '
-            '모두 통과했다. 새 독립 작업의 결과이므로 이전 작업의 '
-            '시간과 직접 비교할 수 없다. V0는 수치 검증에만 사용한다.\n\n공식 시간은 diagnostic=false인 timing 기록만 '
-            '사용한다. 가속비는 같은 variant의 T=1 중앙값을 현재 T 중앙값으로 나눈 값이며, 스레드 효율은 가속비/T이다. '
-            '최소–최대 범위는 신뢰 구간이 아니다.\n\n',
-            '별도 진단 profile 표본은 공식 시간에서 제외한다. 각 표본에서 커널 시간이 가장 큰 rank의 모든 단계를 '
-            '사용하며 동률이면 작은 rank를 선택한다. 백분율의 분모는 해당 rank의 커널 시간이다. rank별 단계 최대값을 '
-            '합산해서는 안 되며, 이 분해를 순수 atomic 대기 시간으로 해석할 수 없다. 아래 값은 시간과 백분율의 '
-            '중앙값으로 각각 계산하므로 합계가 커널 중앙값 또는 100%와 일치하지 않을 수 있다. residual은 해당 rank의 '
-            '커널 시간에서 단계 시간의 합을 뺀 값이다.\n\n',
-            '원본 입력은 변경하지 않는다. `python3 hpc/analyze-atlas-thread-scaling.py RESULT_DIRECTORY`로 다시 생성할 수 있다.\n')}
+    }
     return {name: title + context + intro + numeric + timing_table + '\n' + explanation + phase_table + '\n' + ending
             for name, (title, intro, explanation, ending) in introductions.items()}
 

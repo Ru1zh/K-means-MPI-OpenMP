@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
         std::vector<double> full;
         const double data_start = rt.time();
         if (!c.input.empty()) {
-            // 文件头决定实际 N、D；先同步尺寸，再让所有进程按同一规则校验和分区。
+            // The file header determines the actual N and D; synchronize sizes first, then let all processes validate and partition by the same rule.
             if (!rt.rank) full = km::read_data(c.input, c.n, c.d);
             rt.dimensions(c);
         }
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
         const auto ids = km::initial_indices(c);
         std::vector<double> centers(km::elements(c.k, c.d));
         if (!rt.rank) centers = km::initial_centers(c, ids, full);
-        // 所有进程从同一份初始质心出发；之后无需保留 root 的完整输入副本。
+        // All processes start from the same initial centroids; root no longer needs to keep the full input copy.
         rt.broadcast(centers);
         std::vector<double>().swap(full);
         const auto initial = centers;
@@ -65,18 +65,18 @@ int main(int argc, char** argv) {
         std::vector<km::Trace> trace;
         if (c.trace) trace.reserve(c.iterations);
         const bool all = c.comm == "allreduce";
-        // 一轮 Lloyd：本地分配/累加 -> 全局统计 -> 质心更新 -> 必要的广播。
-        // 所有进程必须以相同顺序执行集合通信，包括没有本地样本的进程。
+        // One Lloyd iteration: local assignment/accumulation -> global statistics -> centroid update -> broadcast if needed.
+        // All processes must execute collective calls in the same order, including processes with no local samples.
         auto step = [&](bool diagnostic, km::Phases* prof) {
             km::accumulate(data, centers, c, workspace, local, diagnostic, nullptr, prof);
             double start = prof ? rt.time() : 0;
             rt.reduce(local, global, all);
             if (prof) phases.reduce += rt.time() - start;
-            // 逐轮 SSE 需要额外归约，仅在 trace 诊断中启用。
+            // Per-iteration SSE needs an extra reduction and is enabled only for trace diagnostics.
             if (diagnostic) global.sse = rt.sum(local.sse);
             start = prof ? rt.time() : 0;
             double shift = 0;
-            // Allreduce 后各进程都有统计量；Reduce 后仅 root 的接收结果有效。
+            // After Allreduce every process holds the statistics; after Reduce only root's receive buffer is valid.
             if (all || !rt.rank) shift = km::update(centers, global, c);
             if (prof) phases.update += rt.time() - start;
             start = prof ? rt.time() : 0;
@@ -84,17 +84,17 @@ int main(int argc, char** argv) {
             if (prof) phases.control += rt.time() - start;
             if (diagnostic && !rt.rank) {
                 km::check_stats(global, c.n, true);
-                // sse/counts 属于更新前质心的分配；centers 是本轮更新后的质心。
+                // sse/counts describe the assignment to the pre-update centroids; centers are the centroids updated in this round.
                 trace.push_back({global.sse, shift, global.counts, centers});
             }
             return shift;
         };
         const double warmup_start = rt.time();
         for (int i = 0; i < c.warmup; ++i) step(false, nullptr);
-        // 预热只用于启动线程和预热缓存，测量必须恢复原始状态以保持相同工作量。
+        // Warmup only starts threads and warms caches; measurement must restore the original state to keep the same workload.
         centers = initial; local.clear(); global.clear();
         const double warmup_seconds = rt.time() - warmup_start;
-        // 仅在内核开始前同步，不在每轮额外加 barrier 干扰实际通信行为。
+        // Synchronize only before the kernel starts, not with an extra barrier per iteration that would disturb real communication.
         rt.barrier();
         const double kernel_start = rt.time();
         std::string reason = c.mode == "fixed" ? "fixed_iterations" : "max_iterations";
@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
             ++iterations;
             if (c.mode == "converge") {
                 const double start = c.profile ? rt.time() : 0;
-                // 由 root 统一决策，防止各进程因局部判断差异走入不同的集合通信。
+                // Let root make the decision so processes cannot diverge into different collective calls due to local checks.
                 int stop = rt.rank == 0 && shift <= c.tol;
                 rt.broadcast(stop);
                 if (c.profile) phases.control += rt.time() - start;
@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
         const double kernel_seconds = rt.time() - kernel_start;
         const double eval_start = rt.time();
         std::vector<int> labels;
-        // 最后一轮累加对应更新前的质心；必须重分配才能得到最终标签、计数和 SSE。
+        // The last accumulation corresponds to the pre-update centroids; reassignment is required to obtain final labels, counts and SSE.
         km::accumulate(data, centers, c, workspace, local, true, c.dump ? &labels : nullptr, nullptr);
         // Final evaluation is identical for both communication strategies and outside kernel timing.
         rt.reduce(local, global, true);
@@ -123,22 +123,22 @@ int main(int argc, char** argv) {
         if (c.dump) labels = rt.gather_labels(labels, c.n);
         const double evaluation_seconds = rt.time() - eval_start;
         const double total_seconds = rt.time() - total_start;
-        // 只归约各进程本地计时差值，避免假设节点时钟同步；最慢进程决定并行耗时。
+        // Reduce local elapsed-time differences only, avoiding assumptions about synchronized node clocks; the slowest process determines parallel time.
         const double data_max = rt.maximum(data_seconds), init_max = rt.maximum(init_seconds);
         const double warmup_max = rt.maximum(warmup_seconds), kernel_max = rt.maximum(kernel_seconds);
         const double eval_max = rt.maximum(evaluation_seconds), total_max = rt.maximum(total_seconds);
         std::vector<double> profile_ranks;
         if (c.profile) {
-            // 必须先保存本地原值；诊断 gather 不计入内核/普通总耗时。
+            // Save the local originals first; the diagnostic gather is excluded from kernel and ordinary total time.
             profile_ranks = rt.gather_profile({kernel_seconds, phases.accumulate, phases.merge,
                                               phases.reduce, phases.update, phases.control});
-            // 各阶段的最大值可能来自不同进程，不能相加当作内核总时间。
+            // Phase maxima may come from different processes and cannot be summed to reconstruct kernel time.
             phases.accumulate = rt.maximum(phases.accumulate); phases.merge = rt.maximum(phases.merge);
             phases.reduce = rt.maximum(phases.reduce); phases.update = rt.maximum(phases.update);
             phases.control = rt.maximum(phases.control);
         }
         if (!rt.rank) {
-            // 仅 root 输出完整 JSON，避免多进程 stdout 交错破坏实验记录。
+            // Only root prints the complete JSON so multi-process stdout cannot interleave and corrupt the experiment record.
             std::ostringstream hash; hash << std::hex << data_hash;
             auto& out = std::cout;
             out << std::setprecision(17) << '{'
@@ -184,7 +184,7 @@ int main(int argc, char** argv) {
                 int critical_rank = 0;
                 for (int rank = 0; rank < rt.size; ++rank) {
                     const auto offset = static_cast<std::size_t>(rank) * 6;
-                    // 严格大于才替换，计时相同时保留最小 rank。
+                    // Replace only on a strictly greater value, so ties in timing keep the lowest rank.
                     if (profile_ranks[offset] > profile_ranks[static_cast<std::size_t>(critical_rank) * 6])
                         critical_rank = rank;
                     if (rank) out << ',';

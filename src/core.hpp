@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace km {
-// 全局样本数和簇计数统一使用 64 位整数，与 MPI_INT64_T 对应。
+// Global sample counts and cluster counts use 64-bit integers throughout, matching MPI_INT64_T.
 using Count = std::int64_t;
 struct Config {
     Count n = 10000;
@@ -15,11 +15,11 @@ struct Config {
     std::string input, init_spec;
     bool skew = false, dump = false, trace = false, profile = false, help = false;
 };
-// 当前进程负责的全局样本区间为 [first, first + size)，允许 size=0。
+// The global sample range owned by this process is [first, first + size); size may be zero.
 struct Partition { Count first, size; };
 struct Stats {
-    // 按簇存储充分统计量：sums[k*D+j] 为坐标和，counts[k] 为成员数。
-    // 归约这些统计量后再求均值，才能正确处理各进程簇大小不一致的情况。
+    // Sufficient statistics per cluster: sums[k*D+j] is a coordinate sum and counts[k] is the membership count.
+    // Reduce these statistics before computing means so unequal per-process cluster sizes are handled correctly.
     std::vector<double> sums;
     std::vector<Count> counts;
     double sse = 0;
@@ -27,7 +27,7 @@ struct Stats {
     void clear();
 };
 struct Workspace {
-    // 仅 V3 分配；每个线程通过 stride 定位独立缓冲，避免样本循环内同步。
+    // Allocated only for V3; each thread locates its private buffer by stride to avoid synchronization inside the sample loop.
     std::vector<double> sums;
     std::vector<Count> counts;
     std::size_t sum_stride = 0, count_stride = 0;
@@ -45,12 +45,12 @@ std::vector<double> initial_centers(const Config& c, const std::vector<Count>& i
                                     const std::vector<double>& full);
 std::uint64_t fingerprint(const std::vector<double>& data, Count first, int d);
 double wall_time();
-// 每次调用清零并重新计算本地统计；objective/labels/phases 按需启用，
-// 普通迭代无需保存标签或累加 SSE，减少性能测量中的额外工作。
+// Each call clears and recomputes local statistics; objective/labels/phases are enabled on demand,
+// Ordinary iterations do not need labels or accumulated SSE, which reduces extra work during performance measurement.
 void accumulate(const std::vector<double>& data, const std::vector<double>& centers,
                 const Config& c, Workspace& work, Stats& stats, bool objective,
                 std::vector<int>* labels, Phases* phases);
-// stats 必须覆盖全局 N 个样本；原地更新质心并返回相对最大质心位移。
+// stats must cover the global N samples; update centroids in place and return the relative maximum centroid displacement.
 double update(std::vector<double>& centers, const Stats& stats, const Config& c);
 void check_stats(const Stats& stats, Count n, bool objective);
 }

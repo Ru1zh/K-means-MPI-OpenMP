@@ -33,7 +33,7 @@ def number_list(value):
 
 
 def configurations(a):
-    # 仅构造受控对照；每种 suite 明确保持哪些参数不变，避免无意改变工作量。
+    # Build controlled comparisons only; each suite explicitly fixes specific parameters so the workload cannot change unintentionally.
     base = dict(
         n=a.n, d=a.d, k=a.k, p=1, t=a.threads, variant="v3", communication="allreduce"
     )
@@ -49,11 +49,11 @@ def configurations(a):
         for p in a.processes:
             add(p=p)
     elif a.suite == "weak":
-        # N0=a.n，固定每进程样本数和线程数，随 P 增大总样本数。
+        # N0=a.n: fix samples per process and threads per process, so total sample count grows with P.
         for p in a.processes:
             add(p=p, n=a.n * p)
     elif a.suite == "hybrid":
-        # 固定总核数 Q=P*T，只接受能够整除 Q 的进程数。
+        # Fix total cores Q=P*T and accept only process counts that divide Q.
         for p in a.processes:
             if a.total_cores % p == 0:
                 add(p=p, t=a.total_cores // p)
@@ -69,7 +69,7 @@ def configurations(a):
         if a.suite == "smoke":
             add(variant="v0", t=1)
     elif a.suite == "sensitivity":
-        # 每条配置只修改 N、D、K 中一个参数，不做三者的笛卡尔积。
+        # Each configuration changes exactly one of N, D or K; do not form the Cartesian product of all three.
         for p in a.processes:
             add(p=p)
             for n in a.sample_sizes:
@@ -78,7 +78,7 @@ def configurations(a):
                 add(p=p, d=d)
             for k in a.clusters:
                 add(p=p, k=k)
-    # 参数列表可能含基准值，先去重，避免同一配置被意外多测而影响重复次数。
+    # The argument list may contain a baseline value; deduplicate first so the same configuration is not measured twice by accident and repeats stay meaningful.
     unique = {json.dumps(row, sort_keys=True): row for row in rows}
     if not unique:
         raise ValueError(
@@ -91,7 +91,7 @@ def configurations(a):
 
 
 def command(a, row):
-    # 启动器按 token 拆分并替换资源参数；以参数列表运行，路径中的空格不会被拆开。
+    # Split the launcher into tokens and substitute resource parameters; run as an argument list so spaces in paths are not split.
     binary = (
         ROOT / "build" / ("kmeans_serial" if row["variant"] == "v0" else "kmeans_mpi")
     )
@@ -186,7 +186,7 @@ def main():
     with a.output.open("x") as output, a.output.with_suffix(".stderr.log").open("x") as log:
         for repeat in range(a.repeats):
             order = rows.copy()
-            # 每批都覆盖全部配置并打乱顺序，减轻系统状态随时间变化造成的偏差。
+            # Each batch covers all configurations in shuffled order to reduce drift from system state changing over time.
             rng.shuffle(order)
             for row in order:
                 cmd = command(a, row)
@@ -195,7 +195,7 @@ def main():
                 proc = subprocess.run(
                     cmd, text=True, capture_output=True, timeout=a.timeout
                 )
-                # 此处立即停止外部计时，排除后续日志、解析和二进制哈希的开销。
+                # Stop the external timer immediately here to exclude subsequent logging, parsing and binary hashing.
                 launch_seconds = time.perf_counter() - start
                 log.write(shlex.join(cmd) + "\n" + proc.stderr + "\n")
                 log.flush()
@@ -207,7 +207,7 @@ def main():
                 if result["diagnostic"] or result["iterations"] != a.iterations:
                     raise RuntimeError("Unexpected workload or diagnostic run")
                 for key in ["n", "d", "k", "p", "t", "variant", "communication"]:
-                    # 核对实际执行结果，避免启动器资源配置错误却记录为目标配置。
+                    # Check the actual execution result so a launcher misconfiguration cannot be recorded as the target configuration.
                     if result[key] != row[key]:
                         raise RuntimeError(f"Launcher/configuration mismatch: {key}")
                 binary = Path(cmd[cmd.index("--n") - 1])
@@ -229,7 +229,7 @@ def main():
                     ),
                 )
                 output.write(json.dumps(result, allow_nan=False) + "\n")
-                # 每次运行后落到 Python 文件缓冲之外，后续失败时仍保留已完成记录。
+                # Flush each run past the Python file buffer so completed records survive later failures.
                 output.flush()
 
 

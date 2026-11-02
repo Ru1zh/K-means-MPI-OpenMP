@@ -7,7 +7,7 @@
 
 namespace km {
 inline std::string quote(const std::string& value) {
-    // MPI 版本等元数据可能包含换行或控制字符，必须转义后才能写成合法 JSON。
+    // Metadata such as the MPI version may contain newlines or control characters and must be escaped to produce valid JSON.
     std::ostringstream out;
     out << '"';
     for (unsigned char ch : value) {
@@ -23,7 +23,7 @@ template<class T> void array(std::ostream& out, const std::vector<T>& values) {
     out << ']';
 }
 struct Trace {
-    // 同一轮记录中：目标函数/计数对应旧质心，centers 对应更新后的质心。
+    // In a round record, the objective/counts refer to the old centroids and centers to the updated centroids.
     double sse_before, shift;
     std::vector<Count> counts;
     std::vector<double> centers;
