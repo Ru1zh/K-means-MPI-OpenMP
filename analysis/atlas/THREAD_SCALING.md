@@ -4,7 +4,6 @@ Job `1028185.venus01` is complete. Its 50 ordinary timing observations, 50 indep
 
 - [Current report](https://docs.google.com/document/d/17KY4NESQ0XsDnSXgqbnsXNcBrn2BaMSpjH3vj5lSWdc/edit)
 - [Timing and profile tables](thread-scaling-results.en.md)
-- [Detailed Chinese review and figure guide](THREAD_SCALING.zh-CN.md)
 - [Local audit summary](thread-scaling-local-review.json)
 - [Evidence manifest](../../benchmarks/atlas/manifest.json)
 
