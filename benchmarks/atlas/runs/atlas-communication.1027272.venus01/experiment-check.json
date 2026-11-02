@@ -1,0 +1,10 @@
+{
+  "study": "communication",
+  "records": 30,
+  "configurations": 6,
+  "repeats": 5,
+  "numerical_check": "pass",
+  "placement_check": "pass",
+  "identical_counts": true,
+  "job_id": "1027272.venus01"
+}

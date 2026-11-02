@@ -95,11 +95,8 @@ def command(a, row):
     binary = (
         ROOT / "build" / ("kmeans_serial" if row["variant"] == "v0" else "kmeans_mpi")
     )
-    cmd = (
-        []
-        if row["variant"] == "v0"
-        else [part.format(p=row["p"], t=row["t"]) for part in shlex.split(a.launcher)]
-    )
+    launcher = a.serial_launcher if row["variant"] == "v0" else a.launcher
+    cmd = [part.format(p=row["p"], t=row["t"]) for part in shlex.split(launcher)]
     cmd += [
         str(binary),
         "--n",
@@ -162,6 +159,10 @@ def main():
         default="mpiexec -n {p}",
         help="tokenized command, placeholders {p}, {t}; no shell",
     )
+    p.add_argument(
+        "--serial-launcher", default="",
+        help="optional serial command prefix, e.g. taskset -c 40; no shell",
+    )
     p.add_argument("--output", type=Path, default=Path("results/raw.jsonl"))
     p.add_argument("--skew", action="store_true")
     p.add_argument(
@@ -181,10 +182,8 @@ def main():
     rng = random.Random(a.order_seed)
     run_id = str(uuid.uuid4())
     # Exclusive creation protects previous measurements from accidental overwrite.
-    with (
-        a.output.open("x") as output,
-        a.output.with_suffix(".stderr.log").open("x") as log,
-    ):
+    # Keep multiple context managers compatible with Atlas's Python 3.8.
+    with a.output.open("x") as output, a.output.with_suffix(".stderr.log").open("x") as log:
         for repeat in range(a.repeats):
             order = rows.copy()
             # 每批都覆盖全部配置并打乱顺序，减轻系统状态随时间变化造成的偏差。
@@ -221,6 +220,7 @@ def main():
                     platform=platform.platform(),
                     command=cmd,
                     launcher=a.launcher,
+                    serial_launcher=a.serial_launcher,
                     order_seed=a.order_seed,
                     binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
                     launch_seconds=launch_seconds,

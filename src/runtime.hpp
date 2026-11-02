@@ -1,6 +1,7 @@
 #pragma once
 #include "core.hpp"
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cstdlib>
 #include <iostream>
@@ -158,6 +159,17 @@ public:
         return result;
 #else
         (void)n; return local;
+#endif
+    }
+    // 内核结束后收集本地 kernel + 五阶段原值；root 按 rank 顺序接收。
+    std::vector<double> gather_profile(const std::array<double, 6>& local) const {
+#ifdef KM_MPI
+        std::vector<double> result(rank == 0 ? static_cast<std::size_t>(size) * local.size() : 0);
+        MPI_Gather(local.data(), static_cast<int>(local.size()), MPI_DOUBLE,
+                   result.data(), static_cast<int>(local.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        return result;
+#else
+        return {local.begin(), local.end()};
 #endif
     }
     int configure_threads(int requested) const {

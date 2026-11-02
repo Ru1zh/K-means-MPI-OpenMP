@@ -1,0 +1,100 @@
+Job Id: 1027229.venus01
+    Job_Name = p3_hybrid
+    Job_Owner = ryanrui@atlas9-c01
+    resources_used.cpupercent = 223
+    resources_used.cput = 00:08:57
+    resources_used.mem = 382100kb
+    resources_used.ncpus = 12
+    resources_used.vmem = 5405964kb
+    resources_used.walltime = 00:05:43
+    job_state = F
+    queue = parallel
+    server = venus01
+    Checkpoint = u
+    ctime = Sat Oct 24 17:51:11 2026
+    Error_Path = atlas9-c01:/hpctmp/ryanrui/project3-atlas-hybrid/p3_hybrid.e10
+	27229
+    exec_host = cnode-33-43-45/0*12
+    exec_vnode = (cnode-33-43-45:ncpus=12:mem=8388608kb)
+    Hold_Types = n
+    Join_Path = oe
+    Keep_Files = n
+    Mail_Points = a
+    mtime = Sat Oct 24 17:57:09 2026
+    Output_Path = atlas9-c01:/hpctmp/ryanrui/project3-atlas-hybrid/p3_hybrid.o1
+	027229
+    Priority = 0
+    qtime = Sat Oct 24 17:51:11 2026
+    Rerunable = True
+    Resource_List.mem = 8gb
+    Resource_List.mpiprocs = 12
+    Resource_List.ncpus = 12
+    Resource_List.ngpus = 0
+    Resource_List.nodect = 1
+    Resource_List.place = free
+    Resource_List.select = 1:ncpus=12:mpiprocs=12:ompthreads=1:mem=8gb
+    Resource_List.walltime = 00:30:00
+    stime = Sat Oct 24 17:51:23 2026
+    obittime = Sat Oct 24 17:57:09 2026
+    session_id = 45555
+    jobdir = /home/svu/ryanrui
+    substate = 92
+    Variable_List = PBS_O_HOME=/home/svu/ryanrui,PBS_O_LANG=en_SG.UTF-8,
+	PBS_O_LOGNAME=ryanrui,
+	PBS_O_PATH=/app1/ia32-64/java/current/bin:/usr/lib64/mpich-3.2/bin:/ap
+	p1/modules/centos6.3:/app1/modules/centos6.3-intel:/app1/modules/gpu:/a
+	pp1/modules/bioinfo:/etc/modulefiles:/app1/modules/centos7:/home/svu/ry
+	anrui/modules:/usr/bin:/app1/centos6.3/Intel/xe_2015/composer_xe_2015.3
+	.187/bin/intel64:/app1/centos6.3/Intel/xe_2015/composer_xe_2015.3.187/d
+	ebugger/gdb/intel64_mic/bin:/app1/ia32-64/iLog/opl50/bin/x86-64_rhel4.0
+	_3.4:/app1/linux/ILOG/CPLEX_Studio125/cplex/bin/x86-64_sles10_4.1:/app1
+	/common/Apps/gurobi562/linux64/bin:/app1/common/Star_CCM/Siemens/16.02.
+	009/STAR-View+16.02.009/bin:/app1/common/Star_CCM/Siemens/16.02.009/STA
+	R-CCM+16.02.009/star/bin:/app1/ia32-64/java/current/bin:/usr/lib64/mpic
+	h-3.2/bin:/app1/modules/centos6.3:/app1/modules/centos6.3-intel:/app1/m
+	odules/gpu:/app1/modules/bioinfo:/etc/modulefiles:/app1/modules/centos7
+	:/home/svu/ryanrui/modules:/usr/bin:/app1/centos6.3/Intel/xe_2015/compo
+	ser_xe_2015.3.187/bin/intel64:/app1/centos6.3/Intel/xe_2015/composer_xe
+	_2015.3.187/debugger/gdb/intel64_mic/bin:/app1/ia32-64/iLog/opl50/bin/x
+	86-64_rhel4.0_3.4:/app1/linux/ILOG/CPLEX_Studio125/cplex/bin/x86-64_sle
+	s10_4.1:/app1/common/Apps/gurobi562/linux64/bin:/app1/ia32-64/java/curr
+	ent/bin:/usr/lib64/mpich-3.2/bin:/usr/share/Modules/modulefiles:/etc/mo
+	dulefiles:/usr/bin:/app1/centos6.3/Intel/xe_2015/composer_xe_2015.3.187
+	/bin/intel64:/app1/centos6.3/Intel/xe_2015/composer_xe_2015.3.187/debug
+	ger/gdb/intel64_mic/bin:/app1/ia32-64/iLog/opl50/bin/x86-64_rhel4.0_3.4
+	:/app1/linux/ILOG/CPLEX_Studio125/cplex/bin/x86-64_sles10_4.1:/app1/com
+	mon/Apps/gurobi562/linux64/bin:/usr/local/bin:/usr/bin:/home/svu/ryanru
+	i/.dotnet/tools:/opt/ibutils/bin:/opt/pbs/bin:/app1/common/bin:/app1/li
+	nux/bin:/app1/ia32-64/g03:/app1/ia32-64/bin:/app1/ia32-64/mrbayes-3.1.2
+	:/app1/ia32-64/phase/phase-2.0-src:/app1/ia32-64/gauss/GAUSS_9.0_Linux_
+	amd_64:/usr/lpp/mmfs/bin:/app1/ia32-64/meep/meep-1.0.3-parallel-icc/bin
+	:/app1/mvapich2/latest/bin:/home/svu/ryanrui/bin:/app1/ia32-64/bin:/app
+	1/common/matlab/bin:/app1/centos6.3/jdk1.8.0_05/jre/bin:/opt/pbs/bin:/u
+	sr/local/sbin:/usr/sbin:/home/svu/ryanrui/.dotnet/tools:/opt/pbs/bin:/a
+	pp1/common/bin:/app1/linux/bin:/app1/ia32-64/g03:/app1/ia32-64/bin:/app
+	1/ia32-64/mrbayes-3.1.2:/app1/ia32-64/phase/phase-2.0-src:/app1/ia32-64
+	/gauss/GAUSS_9.0_Linux_amd_64:/usr/lpp/mmfs/bin:/app1/ia32-64/meep/meep
+	-1.0.3-parallel-icc/bin:/app1/mvapich2/latest/bin:/home/svu/ryanrui/bin
+	:/app1/ia32-64/bin:/app1/common/matlab/bin:/app1/centos6.3/jdk1.8.0_05/
+	jre/bin:/opt/pbs/bin:/home/svu/ryanrui/.dotnet/tools:/opt/pbs/bin:/app1
+	/common/bin:/app1/linux/bin:/app1/ia32-64/g03:/app1/ia32-64/bin:/app1/i
+	a32-64/mrbayes-3.1.2:/app1/ia32-64/phase/phase-2.0-src:/app1/ia32-64/ga
+	uss/GAUSS_9.0_Linux_amd_64:/usr/lpp/mmfs/bin:/app1/ia32-64/meep/meep-1.
+	0.3-parallel-icc/bin:/app1/mvapich2/latest/bin:/home/svu/ryanrui/bin:/a
+	pp1/ia32-64/bin:/app1/common/matlab/bin:/app1/centos6.3/jdk1.8.0_05/jre
+	/bin:/opt/pbs/bin:/home/svu/ryanrui/.local/bin:/home/svu/ryanrui/bin,
+	PBS_O_MAIL=/var/spool/mail/ryanrui,PBS_O_SHELL=/bin/bash,
+	PBS_O_HOST=atlas9-c01,
+	PBS_O_WORKDIR=/hpctmp/ryanrui/project3-atlas-hybrid,
+	PBS_O_SYSTEM=Linux,PBS_O_QUEUE=parallel
+    comment = Job run at Sat Oct 24 at 17:51 on (cnode-33-43-45:ncpus=12:mem=83
+	88608kb) and finished
+    etime = Sat Oct 24 17:51:11 2026
+    run_count = 1
+    Stageout_status = 1
+    Exit_status = 0
+    Submit_arguments = atlas-hybrid.pbs
+    history_timestamp = 1792835829
+    project = _pbs_project_default
+    Submit_Host = atlas9-c01
+

@@ -49,6 +49,53 @@ class KMeansTests(unittest.TestCase):
         for a, b in zip(left, right):
             self.assertTrue(math.isclose(a, b, abs_tol=1e-10, rel_tol=1e-8), (a, b))
 
+    def check_rank_profile(self, result, ranks):
+        self.assertIn('profile_ranks', result)
+        profiles = result['profile_ranks']
+        self.assertEqual([entry['rank'] for entry in profiles], list(range(ranks)))
+        phase_names = {'accumulate', 'thread_merge', 'mpi_reduce',
+                       'centroid_update', 'control_bcast'}
+        for entry in profiles:
+            self.assertEqual(set(entry), {'rank', 'kernel_seconds', 'phase_seconds'})
+            self.assertEqual(set(entry['phase_seconds']), phase_names)
+            for seconds in [entry['kernel_seconds'], *entry['phase_seconds'].values()]:
+                self.assertTrue(math.isfinite(seconds))
+                self.assertGreaterEqual(seconds, 0)
+            # Phase intervals are disjoint on the same rank. Allow clock resolution noise.
+            self.assertLessEqual(sum(entry['phase_seconds'].values()),
+                                 entry['kernel_seconds'] + 1e-6)
+        critical = max(profiles, key=lambda entry: (entry['kernel_seconds'], -entry['rank']))
+        self.assertEqual(result['profile_critical_rank'], critical['rank'])
+        self.assertEqual(result['kernel_seconds'], critical['kernel_seconds'])
+        for phase in phase_names:
+            self.assertEqual(result['phase_seconds'][phase],
+                             max(entry['phase_seconds'][phase] for entry in profiles))
+
+    def test_serial_profile_preserves_rank_timings_and_normal_output(self):
+        args = ['--n', '103', '--d', '3', '--k', '5', '--iterations', '4', '--dump']
+        plain = self.run_km(args)
+        for field in ['phase_seconds', 'profile_ranks', 'profile_critical_rank']:
+            self.assertNotIn(field, plain)
+        profiled = self.run_km(args + ['--profile'])
+        self.check_rank_profile(profiled, 1)
+        for field in ['centers', 'labels', 'counts', 'sse', 'iterations', 'data_fingerprint']:
+            self.assertEqual(profiled[field], plain[field])
+
+    @unittest.skipUnless(MPI, 'set TEST_MPI=1 for real MPI integration tests')
+    def test_parallel_profile_preserves_rank_timings(self):
+        path = self.fixture('2 1\n0\n2\n')
+        for mode in ['fixed', 'converge']:
+            for variant, t in [('v1', 1), ('v2', 2), ('v3', 2)]:
+                for comm in ['allreduce', 'reduce-bcast']:
+                    with self.subTest(mode=mode, variant=variant, comm=comm):
+                        # Include an empty rank and run actual MPI/OpenMP collectives.
+                        result = self.run_km(['--input', path, '--k', '1', '--iterations', '3',
+                                              '--mode', mode, '--profile'],
+                                             p=3, variant=variant, t=t, comm=comm)
+                        self.check_rank_profile(result, 3)
+                        self.assertEqual(result['counts'], [2])
+                        self.assertEqual(result['sse'], 2)
+
     def test_hand_computed_one_round_and_final_evaluation(self):
         path = self.fixture('4 2\n0 0\n0 2\n10 10\n10 12\n')
         r = self.run_km(['--input', path, '--k', '2', '--init-indices', '0,2',

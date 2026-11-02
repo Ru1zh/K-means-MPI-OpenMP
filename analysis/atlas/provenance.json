@@ -1,0 +1,14 @@
+{
+  "python": "3.9.6 (default, Aug 25 2026, 21:26:21) \n[Clang 21.0.0 (clang-2100.3.34.2)]",
+  "matplotlib": null,
+  "formal_records": 175,
+  "diagnostic_records": 50,
+  "input_manifest_sha256": "cfd33ab9387174d015674eb7c9a504bb20a093aba7436d9b08f6137978ca3674",
+  "scripts_sha256": {
+    "atlas_results.py": "44741e214dda07da4f8d3de8a122cb9495bcfb53a0c497ec277e1a3b925567fd",
+    "atlas_report_text.py": "1fcdfc758071af4396d42eab5ab3166f06dde17e2968aab604ed4366e8a30914",
+    "plot_atlas.py": "e1771bba20a0643c5db2ee559f11235cff7ff088ec011b3fa09be5827871af93",
+    "plot_atlas_thread_scaling.py": "5aa4e4b2b11df4c4efb9447fc21ca86eb3565850e81d2ef048d2162dbfcd9f88",
+    "reproduce_atlas.py": "eb9624e88a8c8d4070b07dd7610a6fdfdf022c4062145c2ef862e50636b07ca7"
+  }
+}

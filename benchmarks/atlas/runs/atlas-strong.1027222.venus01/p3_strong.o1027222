@@ -1,0 +1,69 @@
+Loading openmpi/4.1.2
+  Loading requirement: gcc/7.3.0
+3.8.5 (default, Sep  4 2020, 07:30:14) 
+[GCC 7.3.0]
+Stage 1: Rebuild on the compute node.
+mkdir -p build
+/app1/centos7/gnu/gcc-9.2.0//bin/g++ -O3 -std=c++17 -Wall -Wextra -Wpedantic src/main.cpp src/data.cpp src/accumulation.cpp -o build/kmeans_serial
+mpicxx -O3 -std=c++17 -Wall -Wextra -Wpedantic -fopenmp -DKM_MPI src/main.cpp src/data.cpp src/accumulation.cpp -fopenmp -o build/kmeans_mpi
+Stage 2: Check OS CPU affinity within the PBS allocation.
+Recorded affinity for P=1.
+Recorded affinity for P=2.
+Recorded affinity for P=3.
+Recorded affinity for P=4.
+Recorded affinity for P=6.
+Recorded affinity for P=12.
+Verified serial baseline OS CPU: 40
+Stage 3: Fixed-work strong scaling; V3, one thread/rank, 5 repeats.
+[1/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 6 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[1/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 1 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[1/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 3 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[1/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 12 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[1/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 4 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[1/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 2 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[1/5] taskset --cpu-list 40 /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_serial --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v0 --comm allreduce
+[2/5] taskset --cpu-list 40 /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_serial --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v0 --comm allreduce
+[2/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 1 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[2/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 2 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[2/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 3 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[2/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 6 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[2/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 4 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[2/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 12 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[3/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 2 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[3/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 12 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[3/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 3 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[3/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 6 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[3/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 4 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[3/5] taskset --cpu-list 40 /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_serial --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v0 --comm allreduce
+[3/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 1 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[4/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 4 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[4/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 1 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[4/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 2 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[4/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 6 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[4/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 3 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[4/5] taskset --cpu-list 40 /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_serial --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v0 --comm allreduce
+[4/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 12 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[5/5] taskset --cpu-list 40 /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_serial --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v0 --comm allreduce
+[5/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 12 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[5/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 4 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[5/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 3 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[5/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 1 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[5/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 2 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+[5/5] mpirun --hostfile /var/spool/pbs/aux/1027222.venus01 -n 6 --map-by slot:PE=1 --bind-to core --nooversubscribe --report-bindings /hpctmp/ryanrui/project3-atlas-strong/build/kmeans_mpi --n 1000000 --d 32 --k 32 --iterations 20 --warmup 2 --seed 42 --threads 1 --variant v3 --comm allreduce
+Stage 4: Check measurement completeness and numerical consistency.
+{"records": 35, "configurations": 7, "repeats": 5, "numerical_check": "pass", "identical_counts": true}
+Strong-scaling job finished. Results: /hpctmp/ryanrui/project3-atlas-strong/results/atlas-strong.1027222.venus01
+      ======================================================================================
+     Resource Usage on 2026-10-24 17:40:34.425294:
+     JobId: 1027222.venus01  				 Project: _pbs_project_default 
+     Submission Host: atlas9-c01 
+     Exit Status: 0
+     NCPUs Requested: 12 				 NCPUs Used: 12
+     Memory Requested: 8gb 				 Memory Used: 301464kb 
+     Vmem Used: 2958056kb
+     CPU Time Used: 00:07:52 
+     Walltime requested: 00:30:00 			 Walltime Used: 00:05:11
+     Submit Time:  Sat Oct 24 17:35:20 2026 		 Start Time: Sat Oct 24 17:35:22 2026 
+     End Time: Sat Oct 24 17:40:34 2026 
+     Execution Nodes Used: (cnode-33-43-39:ncpus=12:mem=8388608kb)
+     ======================================================================================

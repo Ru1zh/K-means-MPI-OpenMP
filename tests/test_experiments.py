@@ -4,6 +4,7 @@ import csv
 import importlib.util
 import json
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -41,12 +42,42 @@ class ExperimentTests(unittest.TestCase):
             self.assertNotEqual(duplicate.returncode, 0)
             # Some MPI libraries include a terminating NUL in their reported length.
             rows[0]['mpi_version'] = 'MPI library\x00'
+            for row in rows:
+                row.pop('serial_launcher', None)
             legacy = Path(directory) / 'legacy.jsonl'
             legacy.write_text('\n'.join(json.dumps(r) for r in rows))
             portable_csv = Path(directory) / 'portable.csv'
             subprocess.run([sys.executable, str(ROOT / 'scripts/summarize.py'), str(legacy),
                             '--output', str(portable_csv)], check=True, capture_output=True)
             self.assertNotIn('\x00', portable_csv.read_text())
+
+    def test_serial_launcher_executes_and_is_recorded(self):
+        with tempfile.TemporaryDirectory(prefix='serial launcher ') as directory:
+            folder = Path(directory)
+            marker = folder / 'prefix executed.txt'
+            wrapper = folder / 'prefix wrapper.py'
+            wrapper.write_text(
+                'import os,sys\n'
+                'with open(sys.argv[1], "a") as f: f.write("called\\n")\n'
+                'os.execv(sys.argv[2], sys.argv[2:])\n'
+            )
+            prefix = shlex.join([sys.executable, str(wrapper), str(marker)])
+            raw = folder / 'raw.jsonl'
+            subprocess.run([sys.executable, str(ROOT / 'scripts/benchmark.py'),
+                            '--suite', 'serial', '--n', '23', '--d', '2', '--k', '3',
+                            '--iterations', '2', '--repeats', '2',
+                            '--serial-launcher', prefix, '--output', str(raw)],
+                           check=True, text=True, capture_output=True)
+            self.assertEqual(marker.read_text().splitlines(), ['called', 'called'])
+            rows = [json.loads(line) for line in raw.read_text().splitlines()]
+            self.assertEqual(len(rows), 2)
+            self.assertTrue(all(row['serial_launcher'] == prefix for row in rows))
+            summary = folder / 'summary.csv'
+            subprocess.run([sys.executable, str(ROOT / 'scripts/summarize.py'), str(raw),
+                            '--output', str(summary)], check=True, capture_output=True)
+            with summary.open() as source:
+                result = list(csv.DictReader(source))
+            self.assertEqual(result[0]['serial_launcher'], prefix)
 
     def test_launch_timer_excludes_metadata_work(self):
         spec = importlib.util.spec_from_file_location('benchmark', ROOT / 'scripts/benchmark.py')
