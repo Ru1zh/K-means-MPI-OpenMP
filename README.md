@@ -1,7 +1,5 @@
 # Lloyd K-means with MPI + OpenMP
 
-[English](README.md) | [简体中文](README.zh-CN.md) | [한국어](README.ko.md)
-
 C++17 implementations of Lloyd K-means for comparing process and thread parallelism. Includes a serial reference, MPI/OpenMP variants, numerical tests, and benchmark scripts. The clustering algorithm is implemented directly without a clustering library.
 
 | Variant | Local accumulation | Purpose |
