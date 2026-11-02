@@ -15,6 +15,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def verify_bundle(bundle):
     """Check archived logs, placement records and source packages byte for byte."""
+    if not (bundle/'checksums.sha256').is_file():
+        raise ValueError(
+            'Archived evidence bundle not found at %s. This code-only snapshot does not '
+            'include it; pass --bundle <path> to a full evidence bundle.' % bundle)
     expected = {}
     for line in (bundle/'checksums.sha256').read_text().splitlines():
         digest, name = line.split('  ', 1)

@@ -11,6 +11,7 @@ import math
 from pathlib import Path
 import re
 import statistics
+import sys
 import tarfile
 
 
@@ -161,7 +162,7 @@ def main():
                                 cross_socket_ranks=layout['configurations'][str(p)]['cross_socket_ranks']))
         table.append('| %d×%d | %.6f | %.6f–%.6f | %.6f | %.6f–%.6f | %.3f× | %.2f%% |'%
                      (p,12//p,first['median'],first['minimum'],first['maximum'],second['median'],second['minimum'],second['maximum'],ratio,reduction))
-    original_files=[p for p in folder.rglob('*') if p.is_file() and p.name not in ['analysis.audit.json','analysis.zh-CN.md']]
+    original_files=[p for p in folder.rglob('*') if p.is_file() and p.name not in ['analysis.audit.json','analysis.md']]
     sse_min=min(r['sse'] for r in rows);sse_max=max(r['sse'] for r in rows)
     audit=dict(job_id=allocation['job_id'],study=kind,records=len(rows),configurations=len(expected),
                repeats=plan['repeats'],source_check='pass',checked_source_files=len(expected_sources),
@@ -174,75 +175,80 @@ def main():
                small_case_errors=small_errors,comparisons=comparisons,
                source_sha256={str(p.relative_to(folder)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(original_files)})
     (folder/'analysis.audit.json').write_text(json.dumps(audit,indent=2)+'\n')
-    title='V2/V3 线程累加策略' if kind=='threads' else 'V3 通信策略'
-    first_name='V2 原子更新' if kind=='threads' else 'Allreduce'
-    second_name='V3 私有缓冲' if kind=='threads' else 'Reduce+Bcast'
+    title='V2/V3 thread accumulation strategy' if kind=='threads' else 'V3 communication strategy'
+    first_name='V2 atomic updates' if kind=='threads' else 'Allreduce'
+    second_name='V3 private buffers' if kind=='threads' else 'Reduce+Bcast'
     job_date=datetime.fromisoformat(rows[0]['timestamp_utc']).astimezone(timezone(timedelta(hours=8))).date().isoformat()
     favorable=all(c['ranges_separated'] for c in comparisons)
-    intro=('%d 种配比中，V3 的全部运行都快于对应 V2 的全部运行，耗时范围不重叠。'%len(comparisons) if favorable and kind=='threads'
-           else '各配比的具体性能差异见下表；最小–最大范围不是置信区间。')
+    intro=('In all %d configurations, every V3 run was faster than the corresponding V2 run, '
+           'and the time ranges did not overlap.'%len(comparisons) if favorable and kind=='threads'
+           else 'Differences for each configuration are shown below; min–max ranges are not confidence intervals.')
     trend=sorted(comparisons,key=lambda c:c['t'])
     increasing=all(b['speedup']>=a['speedup'] for a,b in zip(trend,trend[1:])) and len(trend)>1
-    thread_ratios='；'.join('P=%d、T=%d：%.3f 倍'%(c['p'],c['t'],c['speedup']) for c in comparisons)
-    interpretation=(('V2/V3 的耗时中位数比为：'+thread_ratios+'。')+
-                    ('收益随本次线程数增大而增大的趋势，与私有缓冲减少共享原子更新的设计动机一致。' if increasing else '策略差异的大小需结合各 P/T 分别讨论。')+
-                    '\n\n进程数也同时变化，数据分区、通信和缓存条件随之改变；本轮没有直接记录原子等待时间或硬件计数器，不能把全部时间差定量归因于原子竞争。若要进一步分解成因，应单独 profile，避免将诊断样本混入正式时间。'
-                    if kind=='threads' else '相同 P/T 下只改变通信策略；应结合重复范围判断差异。当前结果不直接测量通信阶段的独立开销，需单独 profile 才能分析瓶颈。')
+    thread_ratios='; '.join('P=%d, T=%d: %.3f×'%(c['p'],c['t'],c['speedup']) for c in comparisons)
+    interpretation=(('Median V2/V3 time ratios: '+thread_ratios+'. ')+
+                    ('The benefit grows with thread count in this run, consistent with the design motivation of private buffers reducing shared atomic updates.' if increasing else 'The size of the strategy difference must be discussed for each P/T.')+
+                    '\n\nProcess count also changes, so partitioning, communication and cache conditions change with it; this run did not record atomic wait time or hardware counters, so the full time difference cannot be attributed quantitatively to atomic contention. Decomposing the cause further requires separate profiling; diagnostic samples must not be mixed into formal timings.'
+                    if kind=='threads' else 'Only the communication strategy changes at the same P/T; interpret differences together with the repeat ranges. The current results do not directly measure communication-phase overhead, so separate profiling is needed to analyse the bottleneck.')
     if kind=='communication':
-        changes='；'.join('%d×%d：%+.2f%%'%(c['p'],c['t'],-c['time_reduction_pct']) for c in comparisons)
+        changes='; '.join('%d×%d: %+.2f%%'%(c['p'],c['t'],-c['time_reduction_pct']) for c in comparisons)
         overlap=all(max(c['first']['minimum'],c['second']['minimum'])<=min(c['first']['maximum'],c['second']['maximum']) for c in comparisons)
-        interpretation+='\n\nReduce+Bcast 相对 Allreduce 的中位耗时变化为：'+changes+'。'
+        interpretation+='\n\nMedian time change of Reduce+Bcast relative to Allreduce: '+changes+'.'
         if overlap:
-            interpretation+='各配比的两组耗时范围均重叠；本次没有足够依据认定一种通信策略存在稳定性能优势。可以保留默认 Allreduce，但不把这一选择描述为性能优越性的证明。'
-        interpretation+='本轮没有单独测量归约/广播阶段，不能由内核总时间接近推出通信阶段本身耗时相同。'
-    next_step=('下一步可以执行已准备的通信方式对照，继续保留相同的代表性 P/T。' if kind=='threads'
-               else '主要实验数据已收齐，可以进入图表与报告整理；弱扩展、profile 和多节点实验按报告需要补充。')
-    report='''# Atlas %s对照结果
+            interpretation+=' The time ranges of both groups overlap in every configuration; this run does not provide enough evidence for a stable advantage of either communication strategy. The default Allreduce can be retained, but this choice should not be described as proof of superior performance.'
+        interpretation+=' This run did not measure the reduction/broadcast phases separately, so similar kernel totals do not imply equal communication-phase times.'
+    next_step=('Next, run the prepared communication comparison while keeping the same representative P/T.' if kind=='threads'
+               else 'The main experimental data is complete; proceed to figures and report preparation. Add weak-scaling, profiling or multi-node experiments as the report requires.')
+    env_line='%s, %s, Python %s.'%(
+        rows[0].get('compiler','unknown'),
+        str(rows[0].get('mpi_version','unknown')).split(',')[0],
+        sys.version.split()[0])
+    report='''# Atlas %s comparison
 
-作业 `%s`，%s（新加坡时间），节点 `%s`。仅使用本作业内匹配配置的时间进行策略对照。
+Job `%s`, %s (Singapore time), node `%s`. Strategy comparisons use only matched configurations within this job.
 
-## 核查结论
+## Verification
 
-- PBS 和脚本退出状态均为 0；%d 个上传源文件的校验全部通过。
-- %d 条正式记录，%d 组配置，每组 %d 次；原始分块文件与合并文件一致，CSV 和 comparisons.json 的统计均已独立重算。
-- 数据指纹、初始中心与本作业内的 V0 数值参考匹配，所有正式运行的最终簇计数相同、总数为 1000000。
-- SSE 范围为 %.12f 至 %.12f；相对 V0 的最大绝对误差 %.6g，缩放误差 %.3g。这里缩放误差为绝对误差/max(1,abs(V0 SSE))。
-- 所选小数据配置的质心、标签、计数和 SSE 对照通过，具体误差在 preflight-check.json 与 analysis.audit.json 中。
-- 核对 %d 份 rank 记录、%d 份正式启动前的 OpenMP 线程探测记录。相同 P/T 的两种策略和所有重复使用相同 rank/thread 核心布局，无重叠、无越界。
+- PBS and script exit status are 0; checksums for all %d uploaded source files passed.
+- %d formal records in %d configurations, %d repeats each; raw shard files match the merged file, and the CSV and comparisons.json statistics were recomputed independently.
+- Data fingerprint and initial centers match the V0 reference in this job; every formal run has identical cluster counts summing to 1000000.
+- SSE ranges from %.12f to %.12f; maximum absolute error versus V0 is %.6g and scaled error %.3g, where scaled error is absolute error / max(1, abs(V0 SSE)).
+- The selected small-data configuration matches on centers, labels, counts and SSE; details are in preflight-check.json and analysis.audit.json.
+- %d rank records and %d OpenMP thread-probe records before formal launches were checked. Both strategies at the same P/T and all repeats use the same rank/thread CPU layout, with no overlap or out-of-range placement.
 
-## 环境与比较范围
+## Environment and scope
 
-GCC 9.2.0、Open MPI 4.1.2、Python 3.8.5，AMD EPYC 7R13 KVM 节点。固定 N=1000000、D=32、K=32、seed=42，预热 2 轮后恢复初始中心，计时 20 轮。所有配置 P×T=12、单节点。
+%s Fixed N=1000000, D=32, K=32, seed=42; 2 warmup iterations restore the initial centers before 20 measured iterations. All configurations use P×T=12 on a single node.
 
 %s
 
-## 性能结果
+## Performance
 
-时间采用 kernel_seconds 中位数；数据生成、初始化、预热、最终评价和启动探测不在内核时间中。每个 P/T 内两种策略交错执行，每轮随机排序；各 P/T 按分块顺序执行，不是所有配置全局交错。
+Times are median kernel_seconds; data generation, initialization, warmup, final evaluation and launch probes are excluded. The two strategies are interleaved within each P/T, with the order shuffled per repeat; P/T blocks run sequentially, so configurations are not globally interleaved.
 
-| P×T | %s中位/秒 | 最小–最大/秒 | %s中位/秒 | 最小–最大/秒 | 第一方案时间/第二方案时间 | 第二方案耗时下降 |
+| P×T | %s median (s) | min–max (s) | %s median (s) | min–max (s) | first / second time | second time reduction |
 |---|---:|---:|---:|---:|---:|---:|
 %s
 
-表中“第二方案耗时下降”为负值时，表示第二方案本次中位耗时更长。
+A negative "second time reduction" means the second strategy had a longer median time in this run.
 
 %s
 
 %s
 
-这里的比值是固定资源下的策略对照，不是相对串行的强扩展加速比。本作业内 V0 大输入只运行一次，供数值核查，不把它作为重复计时的性能基线。
+These ratios compare strategies under fixed resources; they are not strong-scaling speedups relative to serial. The large V0 run in this job is a single numerical check, not a repeated performance baseline.
 
-## 限制与后续
+## Limitations and next steps
 
-线程 affinity 来自执行算法前的独立 OpenMP 探测器；包装器随后使用同一 CPU mask 和环境执行算法，算法另检查实际线程组大小。记录不是算法计时循环内的线程实时采样。
+Thread affinity comes from an independent OpenMP probe run before the algorithm; the wrapper then runs the algorithm with the same CPU mask and environment, and the algorithm separately checks the actual team size. These records are not live thread samples inside the timing loop.
 
-不同作业之间的节点、socket/NUMA 分配及系统状态可能不同，不把本次 V3 时间与此前混合作业的小幅差异解释为优化收益。没有用其他作业的 V0 时间计算本次加速比。
+Nodes, socket/NUMA placement and system state can differ between jobs; small differences between this V3 time and earlier mixed-workload jobs are not interpreted as optimization gains. No V0 time from another job is used to compute speedups.
 
-结论只覆盖当前合成数据规模、节点分配和所测策略。保留全部原始记录、编译日志和布局记录；分析可使用 HPC/analyze-atlas-strategy-results.py 重算。%s
+Conclusions cover only the current synthetic data scale, node allocation and tested strategies. All raw records, build logs and placement records are retained; rerun HPC/analyze-atlas-strategy-results.py to recompute the analysis. %s
 '''%(title,allocation['job_id'],job_date,allocation['host'],len(expected_sources),len(rows),len(expected),plan['repeats'],
        sse_min,sse_max,audit['max_sse_absolute_error_vs_v0'],audit['max_sse_scaled_error_vs_v0'],rank_count,thread_count,
-       intro,first_name,second_name,'\n'.join(table),interpretation,layout_description(allocation,layout,selected_processes),next_step)
-    (folder/'analysis.zh-CN.md').write_text(report)
+       env_line,intro,first_name,second_name,'\n'.join(table),interpretation,layout_description(allocation,layout,selected_processes),next_step)
+    (folder/'analysis.md').write_text(report)
     print(json.dumps(dict(job_id=allocation['job_id'],records=len(rows),numerical='pass',placement='pass',
                           rank_records=rank_count,thread_probe_records=thread_count,
                           speedups=[c['speedup'] for c in comparisons]),indent=2))
@@ -252,8 +258,10 @@ def layout_description(allocation,layout,selected_processes):
     cpus=allocation['allowed_cpus']
     sockets=sorted({r['socket'] for r in allocation['topology'].values()})
     cross={p:c['cross_socket_ranks'] for p,c in layout['configurations'].items() if int(p) in selected_processes}
-    return ('本次 OS CPU 分配为 `%s`，整体使用 socket %s。所测配比的跨 socket rank 为 `%s`。'
-            '因此需区分“整个作业跨 socket”与“单个 rank 的线程跨 socket”；匹配策略的布局保持一致。')%(
+    return ('This job was allocated OS CPUs `%s` and uses sockets %s overall. '
+            'Cross-socket ranks for the tested configurations are `%s`. '
+            'Distinguish "the whole job spans sockets" from "one rank\'s threads span sockets"; '
+            'matched strategies keep the same layout.')%(
                 ','.join(map(str,cpus)),','.join(map(str,sockets)),json.dumps(cross))
 
 

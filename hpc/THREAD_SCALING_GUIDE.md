@@ -48,7 +48,7 @@ After downloading, regenerate analysis locally with Python 3.8+ (standard librar
 python3 hpc/analyze-atlas-thread-scaling.py /path/to/atlas-thread-scaling.JOBID
 ```
 
-Outputs are `thread-scaling-summary.csv`, `phase-summary.csv`, `analysis.audit.json` and `analysis.md` / `analysis.zh-CN.md` / `analysis.ko.md`. Raw inputs are unchanged; derived outputs can be regenerated.
+Outputs are `thread-scaling-summary.csv`, `phase-summary.csv`, `analysis.audit.json` and `analysis.md`. Raw inputs are unchanged; derived outputs can be regenerated.
 
 ## Interpret phase contributions
 

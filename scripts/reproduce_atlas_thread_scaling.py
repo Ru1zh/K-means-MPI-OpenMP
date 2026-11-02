@@ -102,7 +102,7 @@ def main():
                        timing_records=50, profile_records=50, preflight_records=20,
                        missing_optional_evidence=manifest['missing_optional_evidence'])
         (output / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
-        print('Frozen audit passed; both CSVs and three reports match byte for byte.')
+        print('Frozen audit passed; both CSVs and the English report match byte for byte.')
         print('Audit values match; status.txt added to the later input inventory by the PBS exit trap.')
         print('Analyses: ' + str(output))
     except (ValueError, OSError, KeyError, tarfile.TarError) as error:

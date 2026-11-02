@@ -105,8 +105,11 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT / 'analysis/atlas/Figure')
     args = parser.parse_args()
     from reproduce_atlas import verify_bundle
-    verify_bundle(args.bundle)
-    render(args.output, args.bundle)
+    try:
+        verify_bundle(args.bundle)
+        render(args.output, args.bundle)
+    except (OSError, ValueError, KeyError) as error:
+        parser.exit(1, 'Error: %s\n' % error)
 
 
 if __name__ == '__main__':
