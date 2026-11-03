@@ -1,1 +1,0 @@
-/hpctmp/ryanrui/project3-atlas-threads/build/kmeans_serial --n 37 --d 3 --k 4 --seed 42 --iterations 5 --warmup 2 --dump

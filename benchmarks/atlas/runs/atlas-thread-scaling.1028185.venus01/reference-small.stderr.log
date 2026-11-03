@@ -1,1 +1,0 @@
-taskset --cpu-list 24 /home/svu/ryanrui/project3-atlas-thread-scaling/build/kmeans_serial --n 37 --d 3 --k 4 --seed 42 --iterations 5 --warmup 2 --dump

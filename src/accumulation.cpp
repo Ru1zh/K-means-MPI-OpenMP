@@ -11,7 +11,10 @@
 
 namespace km {
 double wall_time() {
-    return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    // Use a process-local origin before conversion to double. Subtracting two
+    // large epoch-valued doubles loses precision in very short phase timings.
+    static const auto origin = std::chrono::steady_clock::now();
+    return std::chrono::duration<double>(std::chrono::steady_clock::now() - origin).count();
 }
 Stats::Stats(int k, int d) : sums(elements(k, d)), counts(k) {}
 void Stats::clear() { std::fill(sums.begin(), sums.end(), 0); std::fill(counts.begin(), counts.end(), 0); sse = 0; }

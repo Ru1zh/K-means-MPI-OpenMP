@@ -35,7 +35,7 @@ def number_list(value):
 def configurations(a):
     # 仅构造受控对照；每种 suite 明确保持哪些参数不变，避免无意改变工作量。
     base = dict(
-        n=a.n, d=a.d, k=a.k, p=1, t=a.threads, variant="v3", communication="allreduce"
+        n=a.n, d=a.d, k=a.k, p=1, t=a.threads, variant=getattr(a, "variant", None) or "v3", communication="allreduce"
     )
     rows = []
 
@@ -85,6 +85,10 @@ def configurations(a):
             "No valid configurations; check process counts and total cores"
         )
     for row in unique.values():
+        if row["variant"] == "v0" and (row["p"] != 1 or row["t"] != 1):
+            raise ValueError("v0 requires P=T=1")
+        if row["variant"] == "v1" and row["t"] != 1:
+            raise ValueError("v1 requires T=1")
         if row["k"] > row["n"]:
             raise ValueError("Every configuration requires K <= N")
     return list(unique.values())
@@ -93,7 +97,7 @@ def configurations(a):
 def command(a, row):
     # 启动器按 token 拆分并替换资源参数；以参数列表运行，路径中的空格不会被拆开。
     binary = (
-        ROOT / "build" / ("kmeans_serial" if row["variant"] == "v0" else "kmeans_mpi")
+        ROOT / "build" / ({"v0": "kmeans_serial", "v4": "kmeans_cuda"}.get(row["variant"], "kmeans_mpi"))
     )
     launcher = a.serial_launcher if row["variant"] == "v0" else a.launcher
     cmd = [part.format(p=row["p"], t=row["t"]) for part in shlex.split(launcher)]
@@ -139,6 +143,8 @@ def main():
         ],
         default="smoke",
     )
+    p.add_argument("--variant", choices=["v0", "v1", "v2", "v3"],
+                   help="override the default variant for scaling/sensitivity suites")
     p.add_argument("--n", type=positive, default=10000)
     p.add_argument("--d", type=positive, default=8)
     p.add_argument("--k", type=positive, default=16)
@@ -182,7 +188,7 @@ def main():
     rng = random.Random(a.order_seed)
     run_id = str(uuid.uuid4())
     # Exclusive creation protects previous measurements from accidental overwrite.
-    # Keep multiple context managers compatible with Atlas's Python 3.8.
+    # Keep multiple context managers compatible with Python 3.8.
     with a.output.open("x") as output, a.output.with_suffix(".stderr.log").open("x") as log:
         for repeat in range(a.repeats):
             order = rows.copy()

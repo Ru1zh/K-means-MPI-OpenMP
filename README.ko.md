@@ -1,4 +1,6 @@
-# MPI + OpenMP를 이용한 Lloyd K-means
+# MPI + OpenMP + CUDA를 이용한 Lloyd K-means
+
+**Vanda 실험:** 여섯 실험을 모두 Vanda에서 새로 측정합니다. 256코어 MPI와 선택적 CUDA V4 실행은 [실험 안내](RUBRIC_GUIDE.ko.md)를 참고하세요. 정식 Vanda 측정 결과는 아직 없습니다.
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [한국어](README.ko.md)
 
@@ -10,6 +12,9 @@
 | V1 | 각 MPI 프로세스 내부에서 직렬 처리 | 순수 MPI 기준 구현 |
 | V2 | OpenMP 공유 배열에 원자적 갱신 | 스레드 간 경합 측정 |
 | V3 | OpenMP 스레드별 전용 버퍼에 누적한 뒤 병합 | 샘플 처리 루프 내부의 동기화 감소 |
+| V4 | 선택적 CUDA 할당 및 2단계 통계 병합 | 단일 GPU FP64 비교 (P=1) |
+
+CUDA는 선택 사항이며 기본 `make all`은 CPU만 빌드합니다. `make cuda CUDA_HOME="$CUDA_HOME" CUDA_ARCH="$CUDA_ARCH"` 후 `build/kmeans_cuda --variant v4`를 실행합니다. 사전 검증과 실제 아키텍처 선택은 11월 안내를 참고하세요.
 
 병렬 실행 파일은 전역 중심점 갱신을 위해 Allreduce와 Reduce + Bcast를 모두 지원합니다.
 
@@ -148,36 +153,21 @@ python3 scripts/benchmark.py --suite communication --processes 1,2 --threads 2 \
 - `--trace`와 `--profile`은 진단 작업을 추가하므로 벤치마크 요약에서 제외됩니다. 각 단계의 최대 시간을 더해 전체 시간을 재구성할 수는 없습니다.
 - 강한 확장성의 속도 향상은 `t_serial / t_parallel`, 효율은 `speedup / (P * T)`입니다. 약한 확장성의 효율은 프로세스당 샘플 수와 스레드 수를 고정한 상태에서 `P=1`과 `P>1`을 비교합니다. 작업량과 환경이 일치하는 실행끼리 비교하세요.
 
-벤치마크 기록에는 호스트 이름, 실행 파일 경로, 실행 명령과 작업 ID가 포함됩니다. 새 실행 결과, 외부 데이터셋, 로컬 메모, 인증 정보, 캐시와 빌드 산출물은 `.gitignore`로 제외됩니다. `benchmarks/atlas/`의 보관 기록은 명시적으로 포함됩니다.
+실험 기록에는 호스트 이름, 실행 파일 경로, 명령 및 작업 ID가 포함됩니다. 작업 중 결과, 외부 데이터, 로컬 메모, 인증 정보, 캐시 및 빌드 파일은 무시하며 검토한 Vanda 증거는 `benchmarks/rubric-202611/`에 보관합니다.
 
-## 완료된 Atlas 실험과 재현
+## Vanda 실험과 보고서 그림
 
-저장소에는 Atlas CPU 실험 다섯 종류의 **일반 측정 기록 175개**와 **별도 진단 50개**와 검증 및 파일럿 기록이 포함되어 있습니다. 정식 실험은 N=1,000,000, D=32, K=32, seed=42, **측정 반복 20회**, 워밍업 2회, 구성별 실행 5회를 사용합니다. 위의 일반 기본값과 구분하세요.
+순차 크기 분석, 순수 MPI 강/약 확장, 통신 비교, 고정 256코어 MPI+OpenMP, 동일 작업 CPU/GPU 비교를 수행합니다. 목표는 일반 시간 측정 275개와 독립 진단 75개입니다. 정식 시간 측정 전에 수치 정확성과 실제 작업 스레드 배치를 검증합니다.
 
-```sh
-python3 scripts/reproduce_atlas.py --verify-only
-python3 scripts/reproduce_atlas.py
-python3 hpc/build-atlas-strategy-packages.py
-```
-
-앞의 두 명령은 MPI나 HPC 로그인 없이 파일 무결성을 확인하고 통계, 수치 결과, 기록된 CPU 배치를 다시 검증합니다. 결과는 `artifacts/atlas-audit/`에 저장하며 보관된 기록은 변경하지 않습니다. 세 번째 명령은 현재 코드로 독립 실행용 작업 패키지를 만듭니다. HPC에서 압축을 풀고 해당 디렉터리로 이동한 뒤 PBS 작업을 제출하세요. 저장소에서 `hpc/`의 PBS 파일을 직접 제출하면 안 됩니다.
-
-자세한 내용은 [HPC 실행 안내](hpc/ATLAS_RUN_GUIDE.ko.md)와 [실험 기록 색인](benchmarks/atlas/EXPERIMENT_INDEX.ko.md)을 참고하세요. 원본 소스 패키지는 당시 버전을 보존하고 새 패키지는 현재 코드를 사용합니다. 실험 기록의 사용자명, 호스트명과 경로는 익명화하지 않고 그대로 보존했습니다.
-
-## 새 고정 P 스레드 확장 실험
-
-[P=2 실험 안내](hpc/THREAD_SCALING_GUIDE.ko.md)는 T=1,2,3,4,6에서 V2/V3를 비교하는 독립 CPU 작업 하나를 준비합니다. 일반 측정 50개와 별도 단계 진단 50개를 기록하며 기존 네 실험은 다시 실행할 필요가 없습니다. 현재 `--profile`은 rank별 커널 및 단계 시간을 보존하고 분석은 커널 시간이 가장 큰 rank의 모든 단계를 사용합니다. 작업 `1028185.venus01`의 일반 측정 50개, 별도 진단 50개, 소규모 사전 검사 20회를 보관하고 재검증했습니다. [원본 목록](benchmarks/atlas/manifest.json)과 [추가 분석](analysis/atlas/THREAD_SCALING.ko.md)을 참고하세요. 일반 성능 측정은 기존 125개를 포함하여 **총 175개**이며 진단은 별도 집계합니다. `python3 -B scripts/reproduce_atlas_thread_scaling.py`로 복사본을 검증할 수 있습니다.
-
-## 보고서 그래프와 통계표
-
-보고서용 영문 그래프는 총 7개입니다. 기존 5개는 PNG/PDF/SVG, 고정 P 실험의 추가 2개는 PNG/SVG입니다. 정확한 CSV 통계와 영어·중국어·한국어 그림 설명도 포함됩니다. [그래프 색인](analysis/atlas/Figure/FIGURE_GUIDE.ko.md), [전체 미리보기](analysis/atlas/overview.png), [결과와 그림 설명](analysis/atlas/report_results.ko.md)을 참고하세요. 선택적 의존성을 설치한 뒤 새 디렉터리에 다시 생성할 수 있습니다.
+[실행 안내](RUBRIC_GUIDE.ko.md), [증거 색인](benchmarks/rubric-202611/CAMPAIGN_INDEX.ko.md), [그림 안내](analysis/rubric-202611/FIGURE_GUIDE.ko.md)를 참고하세요. 전체 증거 감사 후 새 그림을 만들며 각각 PNG, PDF, SVG로 내보냅니다.
 
 ```sh
+python3 scripts/reproduce_rubric.py --status
+python3 scripts/reproduce_rubric.py --seal --verify-only
+python3 scripts/reproduce_rubric.py --tables-only --output artifacts/rubric-tables
 python3 -m pip install -r requirements.txt
-python3 scripts/plot_atlas.py --output artifacts/atlas-figures-new
+python3 scripts/reproduce_rubric.py --output artifacts/rubric-figures
 ```
-
-Matplotlib은 그래프 생성에만 필요합니다. `--tables-only`는 표준 라이브러리만으로 통계와 영어·중국어·한국어 그림 설명를 생성합니다. 오차 막대는 관측 최솟값과 최댓값이며 신뢰구간이 아닙니다. 비교는 같은 작업 안에서 수행하고 기준 실행을 명시합니다.
 
 ## 디렉터리 구조
 
@@ -187,9 +177,9 @@ scripts/      벤치마크 실행 및 CSV 요약
 tests/        수치 검증 및 실험 도구 테스트
 examples/     손으로 예상 결과를 확인할 수 있는 작은 입력
 hpc/          PBS 스크립트, CPU 배치 도구 및 독립 패키지 생성기
-benchmarks/   Atlas 원본 결과, 소스 스냅샷 및 검증 자료
+benchmarks/   Vanda 원본 증거, 소스 스냅샷과 검증 기록
 analysis/     보고서 그래프, 정확한 통계표, 그림 설명 및 재현 안내
 Makefile      직렬 및 병렬 빌드와 테스트
 ```
 
-구현, 테스트와 문서 작성에 OpenAI Codex의 도움을 받았습니다. Atlas 측정 결과와 원본 증거를 함께 제공합니다. 새로운 성능 주장은 대상 시스템에서 직접 측정해야 합니다.
+구현, 테스트와 문서 작성에 OpenAI Codex의 도움을 받았습니다. 성능 결론에는 검증된 Vanda 측정이 필요합니다.

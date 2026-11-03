@@ -1,6 +1,10 @@
 #include "core.hpp"
 #include "runtime.hpp"
 #include "output.hpp"
+#ifdef KM_CUDA
+#include "cuda_backend.hpp"
+#endif
+#include <memory>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -16,7 +20,7 @@ void help() {
         "--n N --d D --k K --seed S [--skew]\n"
         "--input FILE             whitespace file: N D then N*D finite doubles\n"
         "--init-indices 0,2,...    K unique global sample IDs (default seeded sampling)\n"
-        "--variant v1|v2|v3       MPI, atomic, thread-private (serial binary: v0)\n"
+        "--variant v1|v2|v3|v4    MPI, atomic, thread-private (serial binary: v0)\n"
         "--comm allreduce|reduce-bcast --threads T\n"
         "--mode fixed|converge --iterations I --tol EPS --warmup I\n"
         "--dump                   small-data labels, final and initial centers\n"
@@ -45,7 +49,12 @@ int main(int argc, char** argv) {
             rt.dimensions(c);
         }
         km::validate(c);
+#ifdef KM_CUDA
+        if (c.variant != "v4" || rt.size != 1)
+            throw std::runtime_error("CUDA executable requires --variant v4, P=1 (one GPU)");
+#endif
         const int actual_threads = rt.configure_threads(c.threads);
+        const auto placement = rt.placement(c.threads);
         const auto part = km::partition(c.n, rt.rank, rt.size);
         auto data = c.input.empty() ? km::generate(c, part) : rt.scatter(full, c);
         const double data_seconds = rt.time() - data_start;
@@ -61,6 +70,16 @@ int main(int argc, char** argv) {
         const double init_seconds = rt.time() - init_start;
         km::Workspace workspace(c);
         km::Stats local(c.k, c.d), global(c.k, c.d);
+#ifdef KM_CUDA
+        km::CudaBackend gpu(data, c);
+#endif
+        auto accumulate = [&](bool objective, std::vector<int>* labels, km::Phases* prof) {
+#ifdef KM_CUDA
+            gpu.accumulate(centers, local, objective, labels, prof);
+#else
+            km::accumulate(data, centers, c, workspace, local, objective, labels, prof);
+#endif
+        };
         km::Phases phases;
         std::vector<km::Trace> trace;
         if (c.trace) trace.reserve(c.iterations);
@@ -68,7 +87,7 @@ int main(int argc, char** argv) {
         // 一轮 Lloyd：本地分配/累加 -> 全局统计 -> 质心更新 -> 必要的广播。
         // 所有进程必须以相同顺序执行集合通信，包括没有本地样本的进程。
         auto step = [&](bool diagnostic, km::Phases* prof) {
-            km::accumulate(data, centers, c, workspace, local, diagnostic, nullptr, prof);
+            accumulate(diagnostic, nullptr, prof);
             double start = prof ? rt.time() : 0;
             rt.reduce(local, global, all);
             if (prof) phases.reduce += rt.time() - start;
@@ -93,6 +112,9 @@ int main(int argc, char** argv) {
         for (int i = 0; i < c.warmup; ++i) step(false, nullptr);
         // 预热只用于启动线程和预热缓存，测量必须恢复原始状态以保持相同工作量。
         centers = initial; local.clear(); global.clear();
+#ifdef KM_CUDA
+        gpu.reset_profile();
+#endif
         const double warmup_seconds = rt.time() - warmup_start;
         // 仅在内核开始前同步，不在每轮额外加 barrier 干扰实际通信行为。
         rt.barrier();
@@ -112,10 +134,14 @@ int main(int argc, char** argv) {
             }
         }
         const double kernel_seconds = rt.time() - kernel_start;
+#ifdef KM_CUDA
+        // Capture only timed-loop event totals; exclude final evaluation kernels.
+        const auto gpu_metadata = gpu.metadata();
+#endif
         const double eval_start = rt.time();
         std::vector<int> labels;
         // 最后一轮累加对应更新前的质心；必须重分配才能得到最终标签、计数和 SSE。
-        km::accumulate(data, centers, c, workspace, local, true, c.dump ? &labels : nullptr, nullptr);
+        accumulate(true, c.dump ? &labels : nullptr, nullptr);
         // Final evaluation is identical for both communication strategies and outside kernel timing.
         rt.reduce(local, global, true);
         global.sse = rt.sum(local.sse);
@@ -141,7 +167,13 @@ int main(int argc, char** argv) {
             // 仅 root 输出完整 JSON，避免多进程 stdout 交错破坏实验记录。
             std::ostringstream hash; hash << std::hex << data_hash;
             auto& out = std::cout;
-            out << std::setprecision(17) << '{'
+            out << "{\"backend\":" << km::quote(c.variant == "v4" ? "cuda" : "cpu")
+                << ",\"placement\":" << placement;
+#ifdef KM_CUDA
+            out << ",\"gpu\":" << gpu_metadata;
+#endif
+            out << ',';
+            out << std::setprecision(17)
                 << "\"n\":" << c.n << ",\"d\":" << c.d << ",\"k\":" << c.k
                 << ",\"p\":" << rt.size << ",\"t\":" << actual_threads << ",\"nodes\":" << rt.nodes
                 << ",\"variant\":" << km::quote(c.variant) << ",\"communication\":" << km::quote(c.comm)

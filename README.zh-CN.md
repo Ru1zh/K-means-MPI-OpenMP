@@ -1,4 +1,6 @@
-# Lloyd K-means：MPI + OpenMP
+# Lloyd K-means：MPI + OpenMP + CUDA
+
+**Vanda 实验：**六组实验全部在 Vanda 重新测量。256 核 MPI 与可选 CUDA V4 的运行方法见[实验指南](RUBRIC_GUIDE.zh-CN.md)。目前尚无正式 Vanda 测量结果。
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [한국어](README.ko.md)
 
@@ -10,6 +12,9 @@
 | V1 | 各 MPI 进程内串行 | 纯 MPI 基线 |
 | V2 | OpenMP 共享数组原子更新 | 观察线程竞争 |
 | V3 | OpenMP 线程私有缓冲，结束后合并 | 减少样本循环中的同步 |
+| V4 | 可选 CUDA 分配与两阶段统计归并 | 单 GPU FP64 对照（P=1） |
+
+CUDA 为可选构建，默认 `make all` 仍仅编译 CPU。使用 `make cuda CUDA_HOME="$CUDA_HOME" CUDA_ARCH="$CUDA_ARCH"`，然后运行 `build/kmeans_cuda --variant v4`；预检和实际架构选择见十一月实验指南。
 
 并行程序支持 Allreduce 和 Reduce + Bcast 两种全局质心更新方式。
 
@@ -148,36 +153,21 @@ python3 scripts/benchmark.py --suite communication --processes 1,2 --threads 2 \
 - `--trace`、`--profile` 会引入诊断开销，实验汇总会拒绝此类记录。各阶段最大耗时不能相加重建总时间。
 - 强扩展加速比为 `t_serial / t_parallel`，效率为 `speedup / (P * T)`。弱扩展效率比较每进程样本数及线程数固定时 `P=1` 与 `P>1` 的耗时。只对工作量和环境匹配的配置计算这些指标。
 
-实验记录包含主机名、可执行文件路径、启动命令和作业 ID。`.gitignore` 排除新的运行结果、外部数据、本地笔记、凭据、缓存和构建产物；明确纳入 `benchmarks/atlas/` 中保留的实验记录。
+实验记录包含主机名、可执行文件路径、启动命令和作业 ID。工作结果、外部数据、本地笔记、凭据、缓存及构建产物由 `.gitignore` 排除；审阅后的 Vanda 证据保存在 `benchmarks/rubric-202611/`。
 
-## 已完成的 Atlas 实验与复现
+## Vanda 实验与报告图表
 
-仓库保留五组 Atlas CPU 正式实验的 **175 条普通测量记录**（另有 50 条独立诊断），以及正确性验证和 pilot 记录。正式实验使用 N=1,000,000、D=32、K=32、seed=42、**20 轮计时**、2 轮预热、每配置 5 次重复，与上面的通用默认参数不同。
+六组实验为串行规模分析、纯 MPI 强/弱扩展、通信对照、固定 256 核 MPI+OpenMP，以及同作业内 CPU/GPU 对照。目标为 275 条普通计时和 75 条独立诊断；正式计时前先做正确性和实际工作线程绑核预检。
 
-```sh
-python3 scripts/reproduce_atlas.py --verify-only
-python3 scripts/reproduce_atlas.py
-python3 hpc/build-atlas-strategy-packages.py
-```
-
-前两条命令在本地检查文件完整性、重算统计并复查数值与绑核记录，无需 MPI 或 HPC 登录；结果写入 `artifacts/atlas-audit/`，不覆盖存档。第三条命令从当前代码生成独立作业包，传到 HPC、解压并进入包目录后再提交 PBS，不直接从仓库提交 `hpc/` 下的 PBS 文件。
-
-详见 [HPC 使用说明](hpc/ATLAS_RUN_GUIDE.zh-CN.md)、[实验文件索引](benchmarks/atlas/EXPERIMENT_INDEX.zh-CN.md)及[中文结果总览](analysis/atlas/report_results.zh-CN.md)。历史源码包保持原样，新作业包使用当前代码。实验记录按要求保留原始用户名、主机名和路径，未脱敏。
-
-## 新增固定 P 的线程扩展实验
-
-[固定 P=2 实验说明](hpc/THREAD_SCALING_GUIDE.zh-CN.md)提供一个独立 CPU 作业：T=1、2、3、4、6，对比 V2/V3，分别记录 50 条普通计时与 50 条独立阶段诊断。原来四组实验无需重跑。当前 `--profile` 保留逐 rank 内核与阶段耗时，分析使用内核最慢 rank 的全部阶段。已归档作业 `1028185.venus01`，普通计时 50 条、独立诊断 50 条及小数据预检 20 次均通过复核。新增原始证据见 [统一实验索引](benchmarks/atlas/EXPERIMENT_INDEX.zh-CN.md)，结果与图表见 [补充分析](analysis/atlas/THREAD_SCALING.zh-CN.md)。原四组 125 条与新增 50 条合计 **175 条普通性能测量**；诊断另计。运行 `python3 -B scripts/reproduce_atlas_thread_scaling.py` 可在副本上复核新增实验。
-
-## 报告图表与统计表
-
-已统一保存七张英文报告图：原五张为 PNG/PDF/SVG，新增固定 P 的两张为 PNG/SVG，并保留精确 CSV，以及中、英、韩三语言图注。详见[图表索引](analysis/atlas/Figure/FIGURE_GUIDE.zh-CN.md)、[图表总览](analysis/atlas/overview.png)、[中文结果与图注](analysis/atlas/report_results.zh-CN.md)。安装可选绘图依赖后，可在新目录重新生成：
+参见[运行指南](RUBRIC_GUIDE.zh-CN.md)、[证据索引](benchmarks/rubric-202611/CAMPAIGN_INDEX.zh-CN.md)和[图表指南](analysis/rubric-202611/FIGURE_GUIDE.zh-CN.md)。完整证据验收后才生成新图，每张提供 PNG、PDF 和 SVG。
 
 ```sh
+python3 scripts/reproduce_rubric.py --status
+python3 scripts/reproduce_rubric.py --seal --verify-only
+python3 scripts/reproduce_rubric.py --tables-only --output artifacts/rubric-tables
 python3 -m pip install -r requirements.txt
-python3 scripts/plot_atlas.py --output artifacts/atlas-figures-new
+python3 scripts/reproduce_rubric.py --output artifacts/rubric-figures
 ```
-
-仅绘图需要 Matplotlib；`--tables-only` 只用标准库生成统计及中、英、韩三语言图注和说明。误差线表示实测最小到最大值，不是置信区间；各项比较保留作业边界，并明确标出参考基线。
 
 ## 目录结构
 
@@ -187,7 +177,7 @@ scripts/      实验运行与 CSV 汇总
 tests/       数值正确性与实验工具测试
 examples/     可手算验证的小型输入
 hpc/          PBS 脚本、绑核工具与独立作业包生成器
-benchmarks/   Atlas 原始结果、源码快照和核查证据
+benchmarks/   Vanda 原始证据、源码快照和验收记录
 analysis/     报告图表、精确统计表、图注和复现说明
 Makefile      串行／并行编译与测试
 ```

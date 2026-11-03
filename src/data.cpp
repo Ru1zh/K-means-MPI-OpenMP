@@ -95,7 +95,11 @@ void validate(const Config& c) {
     if (c.n <= 0 || c.d <= 0 || c.k < 1 || c.k > c.n) throw std::runtime_error("Require N,D>0 and 1<=K<=N");
     if (c.threads < 1 || c.iterations < 1 || c.warmup < 0 || !std::isfinite(c.tol) || c.tol < 0)
         throw std::runtime_error("Invalid threads, iterations, warmup or tolerance");
-    if (c.variant != "v0" && c.variant != "v1" && c.variant != "v2" && c.variant != "v3")
+#ifndef KM_CUDA
+    if (c.variant == "v4") throw std::runtime_error("v4 requires the optional CUDA build");
+#endif
+    if (c.variant == "v4" && c.threads != 1) throw std::runtime_error("v4 requires one host thread");
+    if (c.variant != "v4" && c.variant != "v0" && c.variant != "v1" && c.variant != "v2" && c.variant != "v3")
         throw std::runtime_error("variant must be v0, v1, v2 or v3");
     if (c.variant == "v1" && c.threads != 1) throw std::runtime_error("v1 requires one thread");
     if (c.comm != "allreduce" && c.comm != "reduce-bcast") throw std::runtime_error("Invalid communication strategy");

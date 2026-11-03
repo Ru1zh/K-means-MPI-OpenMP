@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "status": "pending_hpc",
+  "campaign": "rubric-202611",
+  "ordinary_records": 275,
+  "diagnostic_records": 75,
+  "repeats": 5,
+  "iterations": 20,
+  "warmup": 2,
+  "seed": 42,
+  "precision": "FP64",
+  "suites": [
+    "serial",
+    "strong",
+    "weak",
+    "hybrid",
+    "communication",
+    "gpu"
+  ],
+  "platform": "Vanda"
+}

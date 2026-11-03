@@ -1,5 +1,12 @@
 #pragma once
 #include "core.hpp"
+#include "output.hpp"
+#include <sstream>
+#include <cstring>
+#include <unistd.h>
+#ifdef __linux__
+#include <sched.h>
+#endif
 #include <algorithm>
 #include <array>
 #include <climits>
@@ -57,11 +64,9 @@ public:
         std::exit(1);
     }
     double time() const {
-#ifdef KM_MPI
-        return MPI_Wtime();
-#else
+        // All local intervals, including accumulation phases, use one monotonic
+        // clock; mixing MPI_Wtime and steady_clock can exceed short-run bounds.
         return wall_time();
-#endif
     }
     void barrier() const {
 #ifdef KM_MPI
@@ -170,6 +175,62 @@ public:
         return result;
 #else
         return {local.begin(), local.end()};
+#endif
+    }
+    // Capture real worker affinity before measurement, rather than inferring it
+    // from scheduler requests or the main thread's mask.
+    std::string placement(int threads) const {
+        char hostname[256] = {};
+        gethostname(hostname, sizeof(hostname) - 1);
+        std::string host(hostname);
+        host = host.substr(0, host.find('.'));
+        std::vector<std::string> workers(threads);
+        std::vector<int> failed(threads);
+#ifdef KM_MPI
+        #pragma omp parallel num_threads(threads)
+#endif
+        {
+            int tid = 0;
+#ifdef KM_MPI
+            tid = omp_get_thread_num();
+#endif
+            int cpu = -1;
+            std::vector<int> mask;
+#ifdef __linux__
+            cpu = sched_getcpu();
+            cpu_set_t cpus;
+            CPU_ZERO(&cpus);
+            if (sched_getaffinity(0, sizeof(cpus), &cpus) != 0)
+                failed[tid] = 1;
+            for (int i = 0; i < CPU_SETSIZE; ++i) if (CPU_ISSET(i, &cpus)) mask.push_back(i);
+#endif
+            std::ostringstream out;
+            out << "{\"cpu\":" << cpu << ",\"mask\":";
+            array(out, mask); out << '}'; workers[tid] = out.str();
+        }
+        if (std::any_of(failed.begin(), failed.end(), [](int value) { return value != 0; }))
+            fail("Cannot read worker affinity");
+        std::ostringstream local;
+        local << "{\"host\":" << quote(host) << ",\"rank\":" << rank << ",\"threads\":[";
+        for (int t = 0; t < threads; ++t) { if (t) local << ','; local << workers[t]; }
+        local << "]}";
+        const auto record = local.str();
+#ifdef KM_MPI
+        const int length = static_cast<int>(record.size());
+        std::vector<int> sizes(size), offsets(size);
+        MPI_Gather(&length, 1, MPI_INT, sizes.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+        int total = 0;
+        if (!rank) for (int r = 0; r < size; ++r) { offsets[r] = total; total += sizes[r]; }
+        std::string joined(total, ' ');
+        MPI_Gatherv(record.data(), length, MPI_CHAR, joined.data(), sizes.data(), offsets.data(), MPI_CHAR, 0, MPI_COMM_WORLD);
+        std::string result = "[";
+        if (!rank) for (int r = 0; r < size; ++r) {
+            if (r) result += ',';
+            result += joined.substr(offsets[r], sizes[r]);
+        }
+        return result + ']';
+#else
+        return "[" + record + "]";
 #endif
     }
     int configure_threads(int requested) const {

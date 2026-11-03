@@ -1,5 +1,3 @@
-# Optional figure generation only; core builds, tests and audits use no Python packages.
+# Optional report figure generation; builds, tests and audits use no Python packages.
 # Matplotlib 3.9.4 requires Python 3.9+.
 matplotlib==3.9.4
-# Directly used to assemble the figure overview; also required by Matplotlib.
-Pillow>=8
