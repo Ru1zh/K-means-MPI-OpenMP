@@ -1,6 +1,6 @@
 # Lloyd K-means：MPI + OpenMP + CUDA
 
-**Vanda 实验：**六组实验全部在 Vanda 重新测量。256 核 MPI 与可选 CUDA V4 的运行方法见[实验指南](RUBRIC_GUIDE.zh-CN.md)。目前尚无正式 Vanda 测量结果。
+**Vanda 实验已完成：**六组实验已验收，共 **275 条普通计时、75 条独立阶段诊断**，覆盖 256 核 MPI 和单块 NVIDIA A40 GPU。见[结果分析](analysis/rubric-202611/RESULTS.zh-CN.md)、[实验指南](RUBRIC_GUIDE.zh-CN.md)和[报告图表](analysis/rubric-202611/FIGURE_GUIDE.zh-CN.md)。
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [한국어](README.ko.md)
 
@@ -163,7 +163,7 @@ python3 scripts/benchmark.py --suite communication --processes 1,2 --threads 2 \
 
 ```sh
 python3 scripts/reproduce_rubric.py --status
-python3 scripts/reproduce_rubric.py --seal --verify-only
+python3 scripts/reproduce_rubric.py --verify-only
 python3 scripts/reproduce_rubric.py --tables-only --output artifacts/rubric-tables
 python3 -m pip install -r requirements.txt
 python3 scripts/reproduce_rubric.py --output artifacts/rubric-figures

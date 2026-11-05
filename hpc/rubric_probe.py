@@ -36,7 +36,8 @@ def main():
     a.output.mkdir(parents=True, exist_ok=False)
     nodefile = Path(os.environ['PBS_NODEFILE']).read_text()
     (a.output / 'PBS_NODEFILE').write_text(nodefile)
-    slots = collections.Counter(line.split('.')[0] for line in nodefile.splitlines() if line.strip())
+    slots = collections.Counter(line.strip().split('.')[0].lower()
+                                for line in nodefile.splitlines() if line.strip())
     if not slots or any(count < a.cores_per_node for count in slots.values()):
         raise ValueError('PBS_NODEFILE has fewer allocated slots than C')
     capture(['qstat', '-f', os.environ['PBS_JOBID']], a.output / 'job.txt')
@@ -49,6 +50,10 @@ def main():
                       sys.executable, str(ROOT / 'hpc/rubric_placement.py'), '--inventory'],
                      a.output / 'inventory.txt')
     inventories = [json.loads(line) for line in output.splitlines() if line.strip()]
+    # PBS nodefiles and gethostname() can differ in case and domain suffix.
+    # Canonicalize identity before matching or building rank-binding layouts.
+    for entry in inventories:
+        entry['host'] = entry['host'].split('.')[0].lower()
     if {v['host'] for v in inventories} != set(slots) or len(inventories) != len(slots):
         raise ValueError('Did not observe every allocated node exactly once')
     hosts = {}

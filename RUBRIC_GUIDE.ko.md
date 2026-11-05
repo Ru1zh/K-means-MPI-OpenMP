@@ -2,7 +2,9 @@
 
 [English](RUBRIC_GUIDE.md) · [中文](RUBRIC_GUIDE.zh-CN.md)
 
-여섯 실험을 모두 Vanda에서 실행합니다. Lloyd K-means를 유지하고 실제 순차 크기 분석, 256개 물리 CPU 코어까지의 순수 MPI 강/약 확장, 고정 자원 MPI+OpenMP 비교, 통신 진단, 단일 GPU CUDA V4를 추가합니다. **구현과 실험 도구가 준비되었으며 새 HPC 측정은 아직 완료되지 않았습니다.**
+Vanda 실험 여섯 개가 완료되어 2026년 11월 5일 로컬 검증을 통과했습니다. **일반 측정 275개와 독립 진단 75개**로 순차 N/D/K 분석, 256코어 순수 MPI 강/약 확장, 고정 자원 MPI+OpenMP, 통신 및 단일 GPU CUDA 비교를 다룹니다. [검증된 결과](analysis/rubric-202611/RESULTS.ko.md)를 참고하세요.
+
+실제 호스트는 Intel Xeon Platinum 8452Y이며 CPU 72개, 소켓 2개, 소켓당 36코어, 코어당 스레드 1개, NUMA 노드 2개를 노출합니다. CPU 실험은 노드당 실제 64코어와 최대 4노드를 사용합니다. PBS는 CPU 메모리를 노드당 444 GB로, GPU 할당을 CPU 36개/240 GB/A40 1개로 정규화했습니다. GPU 비교의 실제 사용 자원은 CPU1, CPU8 또는 GPU1입니다. GCC 11.3.0, Open MPI 4.1.8, CUDA 12.4.131(sm_86)을 사용했습니다. 아래 계획 예시보다 실제 기록을 우선합니다.
 
 ## 알고리즘과 평가 항목
 
@@ -114,6 +116,6 @@ python3 scripts/package_rubric.py --verify artifacts/kmeans-rubric-source.zip
 
 > We used [GPT-6.1 sol] to [help code, create tables and beautify assignment]. We are responsible for the content and quality of the submitted work.
 
-보고서는 검증된 Vanda 새 결과를 사용합니다. 최종 성능 표와 결론은 정식 측정 후 작성합니다.
+보고서의 성능 표와 결론은 검증된 Vanda 결과를 반영했습니다. 온라인 문서와 최종 PDF를 함께 갱신합니다.
 
-기존 11월 13일 마감이 유지된다면 11월 2–5일 구현/탐색/사전 검증, 5–9일 정식 실험, 9–11일 통계/보고서, 12일 감사/3개 언어 검토/패키징입니다. 대기열과 실제 CUDA 검증은 HPC에 의존합니다. 다중 GPU와 추가 GPU 최적화 버전은 이번 범위에 포함하지 않습니다.
+여섯 정식 실험과 로컬 검증이 완료되어 보고서에 Vanda 결과를 반영했습니다. 남은 제출 단계는 검토와 패키징입니다. 마감은 2026년 11월 13일입니다. 다중 GPU 확장과 추가 GPU 최적화 버전은 포함하지 않습니다.

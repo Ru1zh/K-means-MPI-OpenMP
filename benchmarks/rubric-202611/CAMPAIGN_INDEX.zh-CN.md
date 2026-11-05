@@ -1,11 +1,11 @@
-# 新评分标准实验证据索引
+# Vanda 实验证据索引
 
-[English](CAMPAIGN_INDEX.md) · [한국어](CAMPAIGN_INDEX.ko.md)
+[English](CAMPAIGN_INDEX.md) · [中文](CAMPAIGN_INDEX.zh-CN.md) · [한국어](CAMPAIGN_INDEX.ko.md)
 
-状态：**等待新 HPC 实测**，未声称已有新耗时或图表。
+六个作业均已完成并验收：**275 条普通计时、75 条独立诊断**。封存归档保留源码快照、PBS/作业输出、资源与数值预检、绑核、原始 JSONL、每次调用 stdout/stderr、完成清单。`evidence-sha256.json` 核对全部证据文件。现有归档用 `--verify-only`，不重复 `--seal`。
 
-在 `runs/` 中放入六个完整作业目录，各对应 serial、strong、weak、hybrid、communication、gpu。每个保留 `probe/`、`measurements/`、PBS 和调度输出，普通/诊断文件分开。目标共 275 条普通计时和 75 条独立诊断。
+```sh
+python3 scripts/reproduce_rubric.py --verify-only
+```
 
-执行、验证、归档、打包见[实验指南](../../RUBRIC_GUIDE.zh-CN.md)。在仓库根目录运行 `python3 scripts/reproduce_rubric.py --status`。只有六个完整作业通过验收后，才用 `--seal --verify-only` 创建 `evidence-sha256.json`；后续核对全部证据文件。源码 ZIP 另有 `PACKAGE-SHA256.json`。
-
-`campaign.json` 是计划矩阵和待完成状态，不是已完成测量清单；未完成真实 HPC 验收前不要标记完成。
+[Guide](../../RUBRIC_GUIDE.zh-CN.md) · [Results](../../analysis/rubric-202611/RESULTS.zh-CN.md)

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "pending_hpc",
+  "status": "complete_verified",
   "campaign": "rubric-202611",
   "ordinary_records": 275,
   "diagnostic_records": 75,
@@ -17,5 +17,8 @@
     "communication",
     "gpu"
   ],
-  "platform": "Vanda"
+  "platform": "Vanda",
+  "verified_date": "2026-11-05",
+  "active_cpu_cores_max": 256,
+  "gpu_model": "NVIDIA A40"
 }

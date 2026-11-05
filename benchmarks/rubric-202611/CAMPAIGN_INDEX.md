@@ -1,11 +1,11 @@
-# Rubric campaign evidence index
+# Vanda campaign evidence index
 
-[中文](CAMPAIGN_INDEX.zh-CN.md) · [한국어](CAMPAIGN_INDEX.ko.md)
+[English](CAMPAIGN_INDEX.md) · [中文](CAMPAIGN_INDEX.zh-CN.md) · [한국어](CAMPAIGN_INDEX.ko.md)
 
-Status: **awaiting new HPC measurements**. No new runtime results or plots are claimed.
+All six jobs are complete and verified: **275 ordinary records and 75 independent profiles**. The sealed archive retains source snapshots, per-job PBS/stdout, resource and numerical preflight logs, placement, raw JSONL, invocation stdout/stderr and completion manifests. `evidence-sha256.json` checks every retained evidence file. Use `--verify-only` for the existing sealed campaign; do not reseal it.
 
-Place six complete job directories under `runs/`, one per suite: serial, strong, weak, hybrid, communication, gpu. Each retains `probe/` and `measurements/`, PBS script and scheduler output. Ordinary and diagnostic files remain separate. Expected totals: 275 ordinary and 75 independent diagnostic records.
+```sh
+python3 scripts/reproduce_rubric.py --verify-only
+```
 
-See [execution, validation, archival and packaging](../../RUBRIC_GUIDE.md). Run `python3 scripts/reproduce_rubric.py --status` from the repository root. Only after all six jobs pass the full audit, use `--seal --verify-only` to create `evidence-sha256.json`; subsequent verification checks every retained evidence file. The source ZIP has a separate `PACKAGE-SHA256.json`.
-
-`campaign.json` records the planned matrix and pending status. It is not a measurement manifest. Do not change its status to complete before real HPC acceptance.
+[Guide](../../RUBRIC_GUIDE.md) · [Results](../../analysis/rubric-202611/RESULTS.md)

@@ -2,7 +2,9 @@
 
 [English](RUBRIC_GUIDE.md) · [한국어](RUBRIC_GUIDE.ko.md)
 
-六组实验全部在 Vanda 运行。保留 Lloyd K-means，新增真正的串行规模分析、至 256 个物理 CPU 核的纯 MPI 强/弱扩展、固定资源 MPI+OpenMP 对照、通信诊断和单 GPU CUDA V4。**代码和实验工具已准备，新 HPC 实测尚未完成。**
+六组 Vanda 实验已完成，并于 2026 年 11 月 5 日本地验收：**275 条普通计时＋75 条独立诊断**。包含串行 N/D/K 分析、至 256 核纯 MPI 强/弱扩展、固定资源 MPI+OpenMP、通信和单 GPU CUDA 对照。见[已验证结果](analysis/rubric-202611/RESULTS.zh-CN.md)。
+
+实测主机为 Intel Xeon Platinum 8452Y，暴露 72 个 CPU、双 socket、每 socket 36 核、每核 1 线程、2 个 NUMA 节点。CPU 实验实际使用每节点 64 核、最多四节点；PBS 将 CPU 内存规范化为每节点 444 GB，GPU 作业记录为 36 CPU/240 GB/一块 A40，GPU 对照实际使用 CPU1、CPU8 或 GPU1。构建为 GCC 11.3.0、Open MPI 4.1.8、CUDA 12.4.131（sm_86）。这些实测值优先于下文的规划示例。
 
 ## 算法和评分对应
 
@@ -116,4 +118,4 @@ python3 scripts/package_rubric.py --verify artifacts/kmeans-rubric-source.zip
 
 报告采用通过验收的 Vanda 新结果；最终性能表和结论须等正式测量完成后填写。
 
-若原 11 月 13 日截止不变：11 月 2–5 日实现/探测/预检，5–9 日正式实验，9–11 日统计/报告，12 日验收、三语言检查及打包。排队资源和真实 CUDA 验收仍依赖 HPC；本轮不做多 GPU 扩展或额外 GPU 优化版本。
+六组正式实验已完成并通过本地验收，报告已采用 Vanda 结果，接下来是审阅和交付打包。作业截止为 2026 年 11 月 13 日。本轮不含多 GPU 扩展和额外 GPU 优化版本。

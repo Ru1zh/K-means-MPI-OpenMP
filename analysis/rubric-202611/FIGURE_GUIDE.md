@@ -1,25 +1,23 @@
-# November figure guide
+# Vanda report figure guide
 
-[中文](FIGURE_GUIDE.zh-CN.md) · [한국어](FIGURE_GUIDE.ko.md)
+[English](FIGURE_GUIDE.md) · [中文](FIGURE_GUIDE.zh-CN.md) · [한국어](FIGURE_GUIDE.ko.md)
 
-Figures are **pending real measurements**. The plotting implementation is `scripts/plot_rubric.py`; full archival validation runs before plotting. From the repository root:
+All figures use the verified real Vanda measurements. The links below point to the report-size versions with larger labels. The original full-size plots and exact tables remain in `verified-20261105/`.
+
+| Figure | Content | PNG | PDF | SVG |
+|---|---|---|---|---|
+| 1 | Serial N/D/K scaling | [PNG](paper-figures/figure-1-serial.png) | [PDF](paper-figures/figure-1-serial.pdf) | [SVG](paper-figures/figure-1-serial.svg) |
+| 2 | Pure MPI strong scaling | [PNG](paper-figures/figure-2-strong.png) | [PDF](paper-figures/figure-2-strong.pdf) | [SVG](paper-figures/figure-2-strong.svg) |
+| 3 | Pure MPI weak scaling | [PNG](paper-figures/figure-3-weak.png) | [PDF](paper-figures/figure-3-weak.pdf) | [SVG](paper-figures/figure-3-weak.svg) |
+| 4 | Communication and phase timing | [PNG](paper-figures/figure-4-communication.png) | [PDF](paper-figures/figure-4-communication.pdf) | [SVG](paper-figures/figure-4-communication.svg) |
+| 5 | Fixed-256-core MPI+OpenMP | [PNG](paper-figures/figure-5-hybrid.png) | [PDF](paper-figures/figure-5-hybrid.pdf) | [SVG](paper-figures/figure-5-hybrid.svg) |
+| 6 | Same-job CPU/GPU comparison | [PNG](paper-figures/figure-6-gpu.png) | [PDF](paper-figures/figure-6-gpu.pdf) | [SVG](paper-figures/figure-6-gpu.svg) |
+
+[Exact statistics](verified-20261105/statistics.csv) · [Independent phases](verified-20261105/profiles.csv) · [Captions](verified-20261105/captions.txt)
 
 ```sh
 python3 -m pip install -r requirements.txt
-python3 scripts/reproduce_rubric.py --output artifacts/rubric-figures
+python3 analysis/rubric-202611/render_paper_figures.py --output artifacts/paper-figures-new
 ```
 
-The fresh output directory contains the following stems, each with `.png`, `.pdf` and `.svg` (SVG is always generated):
-
-| Figure | Stem | Meaning |
-|---|---|---|
-| 1 | `figure-1-serial` | N/D/K sweeps plus normalized O(INKD) cost |
-| 2 | `figure-2-strong` | Runtime, two baseline speedups and efficiency; one-node boundary |
-| 3 | `figure-3-weak` | Runtime, T1/TP efficiency and P×T1/TP throughput speedup |
-| 4 | `figure-4-communication` | Ordinary runtime plus independent critical-rank phase stacks |
-| 5 | `figure-5-hybrid` | Fixed 256-core layouts and percent change vs pure MPI |
-| 6 | `figure-6-gpu` | Same-job CPU1/CPU8/GPU1 loop and end-to-end times |
-
-CSV: `statistics.csv`, `profiles.csv` and one file per suite. English captions: `captions.txt`. No result links are provided until the files actually exist. After collecting and reviewing the real output, keep all three formats here and add links to the actual files. Use SVG for editable vectors, PDF for publication/export, and high-resolution PNG for Word/Google Docs image insertion.
-
-Ordinary error ranges are five-repeat min–max, not confidence intervals. Diagnostic stacks use the complete phase vector of the critical rank from one real median-kernel diagnostic sample. MPI timing includes rank waiting. CUDA events are independent diagnostics, not a substitute for synchronized complete-loop or end-to-end timing. See [full methodology and report blueprint](../../RUBRIC_GUIDE.md).
+Ordinary error bars are five-repeat observed min–max, not confidence intervals. Diagnostic stacks use all phases of one actual critical rank, never independent rank maxima. MPI includes waiting. No new timing or altered observations are introduced by report formatting.

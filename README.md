@@ -1,6 +1,6 @@
 # Lloyd K-means with MPI + OpenMP + CUDA
 
-**Vanda experiment campaign:** all six studies will run on Vanda. Use [the experiment guide](RUBRIC_GUIDE.md) for the 256-core MPI and optional CUDA V4 implementation. Formal Vanda measurements are pending.
+**Vanda campaign completed:** six audited studies contain **275 ordinary measurements and 75 independent profiles**, including 256-core MPI and one NVIDIA A40 GPU. See the [results](analysis/rubric-202611/RESULTS.md), [experiment guide](RUBRIC_GUIDE.md) and [report figures](analysis/rubric-202611/FIGURE_GUIDE.md).
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [한국어](README.ko.md)
 
@@ -157,13 +157,13 @@ Benchmark records include hostnames, executable paths, launch commands, and job 
 
 ## Vanda experiments and report figures
 
-The six suites cover serial size scaling, pure MPI strong/weak scaling, communication, fixed-256-core MPI+OpenMP and a same-job CPU/GPU comparison. The target is 275 ordinary measurements plus 75 independent diagnostic records. Correctness preflight and actual worker affinity checks precede formal timing.
+The six suites cover serial size scaling, pure MPI strong/weak scaling, communication, fixed-256-core MPI+OpenMP and a same-job CPU/GPU comparison. The retained campaign contains 275 ordinary measurements plus 75 independent diagnostic records. Correctness preflight and actual worker affinity checks precede formal timing.
 
 See [the execution guide](RUBRIC_GUIDE.md), [evidence index](benchmarks/rubric-202611/CAMPAIGN_INDEX.md) and [figure guide](analysis/rubric-202611/FIGURE_GUIDE.md). Figures are generated only after the complete evidence passes audit; each new figure is exported as PNG, PDF and SVG.
 
 ```sh
 python3 scripts/reproduce_rubric.py --status
-python3 scripts/reproduce_rubric.py --seal --verify-only
+python3 scripts/reproduce_rubric.py --verify-only
 python3 scripts/reproduce_rubric.py --tables-only --output artifacts/rubric-tables
 python3 -m pip install -r requirements.txt
 python3 scripts/reproduce_rubric.py --output artifacts/rubric-figures

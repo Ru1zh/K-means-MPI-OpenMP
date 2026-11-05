@@ -57,3 +57,12 @@ Thumbs.db
 !/benchmarks/rubric-202611/runs/**/*.o[0-9]*
 !/benchmarks/rubric-202611/runs/**/*.e[0-9]*
 !/analysis/rubric-202611/*.csv
+
+# Exact reviewed tables in nested Vanda analysis directories.
+!/analysis/rubric-202611/**/*.csv
+
+# These 26 generated files are part of the sealed Vanda evidence checksums.
+# Preserve them only within immutable job snapshots; local caches stay ignored.
+!/benchmarks/rubric-202611/runs/**/source/**/__pycache__/
+!/benchmarks/rubric-202611/runs/**/source/**/__pycache__/*.pyc
+!/benchmarks/rubric-202611/runs/gpu.1519803.stdct-mgmt-02/source/build/cuda_backend.o

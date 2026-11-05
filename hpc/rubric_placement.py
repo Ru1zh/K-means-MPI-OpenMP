@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 def host():
-    return socket.gethostname().split('.')[0]
+    return socket.gethostname().split('.')[0].lower()
 
 
 def inventory():
@@ -35,7 +35,7 @@ def verify_placement(records, layout, p, t):
         raise ValueError('Missing/duplicate rank placement records')
     occupied = set()
     for record in records:
-        machine = record['host'].split('.')[0]
+        machine = record['host'].split('.')[0].lower()
         allowed = layout['hosts'][machine]
         core_ids = dict(zip(allowed['cpus'], allowed['core_ids']))
         if len(core_ids) != len(allowed['cpus']) or len(set(core_ids.values())) != len(core_ids):

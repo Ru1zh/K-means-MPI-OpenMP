@@ -17,6 +17,57 @@ def load(name, path):
 
 
 class RubricTests(unittest.TestCase):
+    def test_local_hostname_uses_lowercase_short_name(self):
+        from unittest.mock import patch
+        m = load('rubric_placement', 'hpc/rubric_placement.py')
+        with patch.object(m.socket, 'gethostname', return_value='GN-A40-050.stdct.loc'):
+            self.assertEqual(m.host(), 'gn-a40-050')
+
+    def test_placement_matches_hostname_case_and_domain(self):
+        m = load('rubric_placement', 'hpc/rubric_placement.py')
+        layout = {'hosts': {'gn-a40-050': {'cpus': [0, 2], 'core_ids': ['0:0', '0:1']}}}
+        records = [dict(host='GN-A40-050.stdct.loc', rank=0,
+                        threads=[dict(cpu=0, mask=[0])]),
+                   dict(host='gn-a40-050', rank=1, threads=[dict(cpu=2, mask=[2])])]
+        m.verify_placement(records, layout, 2, 1)
+        records[1]['threads'] = [dict(cpu=0, mask=[0])]
+        with self.assertRaises(ValueError):
+            m.verify_placement(records, layout, 2, 1)
+
+    def test_probe_matches_hostname_case_but_rejects_wrong_or_duplicate_nodes(self):
+        import os
+        import tempfile
+        from unittest.mock import patch
+        m = load('rubric_probe', 'hpc/rubric_probe.py')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            nodefile = root / 'nodes'
+            nodefile.write_text('gn-a40-050.stdct.loc\n' * 64)
+            inventory = dict(host='GN-A40-050', cpus=list(range(64)),
+                             core_ids=['0:%d' % i for i in range(64)])
+            for case, entries in [('valid', [inventory]), ('duplicate', [inventory, inventory]),
+                                  ('wrong', [dict(inventory, host='GN-A40-051')])]:
+                with self.subTest(case=case):
+                    out = root / case
+                    def capture(command, output, required=True):
+                        result = ('\n'.join(json.dumps(e) for e in entries)
+                                  if '--inventory' in command else '')
+                        output.write_text(result)
+                        return result
+                    with patch.dict(os.environ, PBS_JOBID='test-job', PBS_NODEFILE=str(nodefile)), \
+                         patch.object(sys, 'argv', ['probe', '--cores-per-node', '64',
+                                                    '--output', str(out)]), \
+                         patch.object(m, 'capture', side_effect=capture):
+                        if case == 'valid':
+                            m.main()
+                            layout = json.loads((out / 'allocation.json').read_text())
+                            self.assertEqual(list(layout['hosts']), ['gn-a40-050'])
+                            self.assertEqual(layout['scheduler_slots'], {'gn-a40-050': 64})
+                        else:
+                            with self.assertRaises(ValueError):
+                                m.main()
+                            self.assertFalse((out / 'allocation.json').exists())
+
     def test_matrix_counts_and_real_mpi_workload(self):
         proc = subprocess.run([sys.executable, str(ROOT / 'scripts/rubric_campaign.py'),
                                '--suite', 'all', '--cores-per-node', '64', '--dry-run'],

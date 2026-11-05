@@ -1,0 +1,61 @@
+$ qstat -f 1519626.stdct-mgmt-02
+Job Id: 1519626.stdct-mgmt-02
+    Job_Name = km-serial
+    Job_Owner = ryanrui@vanda.nus.edu.sg
+    job_state = R
+    queue = batch_cpu
+    server = stdct-mgmt-02
+    Checkpoint = u
+    ctime = Wed Nov  4 19:03:41 2026
+    Error_Path = vanda.nus.edu.sg:/nfs/home/svu/ryanrui/kmeans-project/km-seria
+	l.e1519626
+    exec_host = CN-106/0*0
+    exec_vnode = (CN-106[0]:mem=256465mb:ncpus=36+CN-106[1]:mem=198191mb:ncpus=
+	28)
+    Hold_Types = n
+    Join_Path = oe
+    Keep_Files = oed
+    Mail_Points = a
+    mtime = Wed Nov  4 19:10:09 2026
+    Output_Path = vanda.nus.edu.sg:/nfs/home/svu/ryanrui/kmeans-project/km-seri
+	al.o1519626
+    Priority = 0
+    qtime = Wed Nov  4 19:03:41 2026
+    Rerunable = True
+    Resource_List.am_job_cache = {"job.queue_charge_rate": 1.0,
+	 "job.walltime": 28800, "job.ncpus": 64.0, "job.ngpus": 0,
+	 "am_cloud_enabled": false}
+    Resource_List.mem = 444gb
+    Resource_List.mpiprocs = 64
+    Resource_List.ncpus = 64
+    Resource_List.ngpus = 0
+    Resource_List.nodect = 1
+    Resource_List.place = scatter:excl
+    Resource_List.queue_charge_rate = 1
+    Resource_List.select = 1:ncpus=64:mpiprocs=64:mem=444GB
+    Resource_List.walltime = 08:00:00
+    stime = Wed Nov  4 19:10:09 2026
+    substate = 41
+    Variable_List = PBS_O_HOME=/home/svu/ryanrui,PBS_O_LANG=en_US.UTF-8,
+	PBS_O_LOGNAME=ryanrui,
+	PBS_O_PATH=/cm/shared/apps/ucx/1.10.1/bin:/cm/local/apps/python39/bin:
+	/cm/shared/apps/openmpi4/gcc/4.1.8/bin:/cm/shared/apps/gcc11/11.3.0/bin
+	:/home/svu/ryanrui/.local/bin:/home/svu/ryanrui/bin:/cm/local/apps/envi
+	ronment-modules/4.5.3//bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr
+	/sbin:/opt/am/python/bin:/sbin:/usr/sbin:/cm/local/apps/environment-mod
+	ules/4.5.3/bin:/opt/pbs/bin:/opt/am/python/bin:/opt/pbs/bin:/opt/am/pyt
+	hon/bin:/opt/pbs/bin,PBS_O_MAIL=/var/spool/mail/ryanrui,
+	PBS_O_SHELL=/bin/bash,PBS_O_INTERACTIVE_AUTH_METHOD=resvport,
+	PBS_O_HOST=stdct-login-01.stdct.loc,
+	PBS_O_WORKDIR=/nfs/home/svu/ryanrui/kmeans-project,PBS_O_SYSTEM=Linux,
+	KMEANS_ENV_FILE=/home/svu/ryanrui/kmeans-env.sh,PBS_O_QUEUE=auto
+    comment = Job run at Wed Nov 04 at 19:10 on (CN-106[0]:mem=256465mb:ncpus=3
+	6+CN-106[1]:mem=198191mb:ncpus=28)
+    etime = Wed Nov  4 19:03:41 2026
+    run_count = 1
+    Submit_arguments = -v KMEANS_ENV_FILE=/home/svu/ryanrui/kmeans-env.sh artif
+	acts/rubric-jobs-20261104-185256/serial.pbs
+    project = personal-ryanrui
+    Submit_Host = vanda.nus.edu.sg
+
+

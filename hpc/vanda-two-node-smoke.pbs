@@ -1,0 +1,87 @@
+#!/bin/bash
+#PBS -N km-two-node
+#PBS -q auto
+#PBS -l select=2:ncpus=64:mpiprocs=64:mem=8gb
+#PBS -l place=scatter:excl
+#PBS -l walltime=00:30:00
+#PBS -j oe
+
+# Submit from ~/kmeans-project, after installing ~/kmeans-env.sh.
+# Diagnostic only: this is not a formal performance measurement.
+set -euo pipefail
+cd "${PBS_O_WORKDIR:?Submit this job from the project root}"
+: "${PBS_JOBID:?This script must run inside PBS}"
+: "${PBS_NODEFILE:?PBS must provide a nodefile}"
+
+RUN="$PWD/artifacts/vanda-two-node.${PBS_JOBID}"
+mkdir -p "$RUN"
+exec > >(tee "$RUN/job.stdout") 2>&1
+trap 'rc=$?; echo "Job exit status: $rc"; exit "$rc"' EXIT
+cp "$0" "$RUN/job.pbs"
+cp "$PBS_NODEFILE" "$RUN/PBS_NODEFILE"
+source "${KMEANS_ENV_FILE:-$HOME/kmeans-env.sh}"
+
+date -u
+hostname
+module list
+qstat -f "$PBS_JOBID" > "$RUN/allocation.txt"
+sort "$PBS_NODEFILE" | uniq -c
+python3 - "$PBS_NODEFILE" <<'PY'
+from collections import Counter
+from pathlib import Path
+import sys
+slots = Counter(Path(sys.argv[1]).read_text().split())
+if len(slots) != 2 or any(n < 64 for n in slots.values()):
+    raise SystemExit('Expected two nodes with at least 64 slots each: ' + str(slots))
+print('Allocation slot check passed:', dict(slots))
+PY
+
+g++ --version
+mpicxx --showme
+mpiexec --version
+python3 --version
+test -x ./build/kmeans_mpi
+
+# Fail rather than silently ignore the previously missing plugin dependencies.
+MPI_PLUGIN_DIR=/cm/shared/apps/openmpi4/gcc/4.1.8/lib/openmpi
+for name in mca_plm_tm mca_ras_tm mca_osc_ucx; do
+  ldd "$MPI_PLUGIN_DIR/$name.so" > "$RUN/$name.ldd.txt"
+  cat "$RUN/$name.ldd.txt"
+  if grep -q 'not found' "$RUN/$name.ldd.txt"; then
+    echo "Unresolved dependencies in $name" >&2
+    exit 1
+  fi
+done
+
+# One rank on each allocated node. Bound the diagnostic in case launch hangs.
+timeout 120s mpiexec --bind-to none --map-by ppr:1:node -n 2 \
+  -x PATH -x LD_LIBRARY_PATH hostname | tee "$RUN/hosts.txt"
+python3 - "$RUN/hosts.txt" <<'PY'
+from pathlib import Path
+import sys
+hosts = Path(sys.argv[1]).read_text().split()
+if len(hosts) != 2 or len(set(hosts)) != 2:
+    raise SystemExit('Expected one rank on each of two different nodes: ' + str(hosts))
+print('Two-node hostname check passed:', hosts)
+PY
+
+timeout 180s mpiexec --bind-to none --map-by ppr:1:node -n 2 \
+  -x PATH -x LD_LIBRARY_PATH ./build/kmeans_mpi \
+  --n 10000 --d 8 --k 16 --variant v1 --threads 1 \
+  --comm allreduce --iterations 5 | tee "$RUN/kmeans.json"
+python3 - "$RUN/kmeans.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+r = json.loads(Path(sys.argv[1]).read_text())
+placement = r['placement']
+if (r['nodes'] != 2 or r['p'] != 2 or r['t'] != 1
+        or len(placement) != 2
+        or {entry['rank'] for entry in placement} != {0, 1}
+        or len({entry['host'] for entry in placement}) != 2):
+    raise SystemExit('K-means did not report the expected two-node placement')
+if r['n'] != 10000 or sum(r['counts']) != 10000 or r['iterations'] != 5:
+    raise SystemExit('Unexpected workload or incomplete result')
+print('PASS: two-node K-means completed; SSE =', r['sse'])
+PY
+echo "Diagnostic results: $RUN"

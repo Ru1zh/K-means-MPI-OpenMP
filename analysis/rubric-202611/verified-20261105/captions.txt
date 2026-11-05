@@ -1,0 +1,13 @@
+Figure 1. Serial V0: three one-factor sweeps. Lower panels normalize by I*N*K*D; initialization and final evaluation are excluded.
+
+Figure 2. V1/T=1 strong scaling to 256 actual physical CPU cores. Baselines are the same-job V0 and V1/P=1 medians. Dotted vertical line marks C.
+
+Figure 3. Weak scaling fixes 100,000 samples per rank. Weak efficiency is T1/TP; throughput speedup is P*T1/TP. This is not strong-scaling serial speedup.
+
+Figure 4. Allreduce and Reduce+Bcast at P=C and P=256. Diagnostic stacks retain all phases from one actual critical rank of the median-kernel diagnostic sample; MPI includes waiting.
+
+Figure 5. V2 and V3 at P*T=256, with a separately repeated same-job V1/256 baseline. Lower time-change percentages are better.
+
+Figure 6. FP64 V0/CPU1, V3/CPU8 and V4/GPU1 measured in one GPU job. Internal end-to-end time includes generation, setup, warmup, loop and final evaluation; MPI initialization/process launch are excluded.
+
+Ordinary points/bars use five repeats: median and observed min–max, not confidence intervals. Diagnostic samples are separate.

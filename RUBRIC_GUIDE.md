@@ -2,7 +2,9 @@
 
 [中文](RUBRIC_GUIDE.zh-CN.md) · [한국어](RUBRIC_GUIDE.ko.md)
 
-All six experiment suites will run on Vanda. This campaign retains Lloyd K-means and adds true serial size sweeps, pure MPI strong/weak scaling to 256 physical CPU cores, fixed-resource MPI+OpenMP comparisons, communication diagnostics and a new single-GPU CUDA V4 backend. **Implementation is prepared; the new HPC measurements are pending.**
+All six studies completed on Vanda and passed local verification on 5 November 2026: **275 ordinary records plus 75 separate profiles**. The campaign includes serial N/D/K sweeps, 256-core pure MPI strong/weak scaling, fixed-resource MPI+OpenMP, communication and a single-GPU CUDA comparison. See the [verified results](analysis/rubric-202611/RESULTS.md).
+
+Recorded Vanda hosts use Intel Xeon Platinum 8452Y processors (72 exposed CPUs, two sockets, 36 cores/socket, one thread/core, two NUMA nodes). CPU studies use 64 actual cores/node, up to four nodes. PBS normalizes CPU memory to 444 GB/node and the GPU allocation to 36 CPUs/240 GB/one A40; the GPU comparisons actively use CPU1, CPU8 or GPU1. Builds use GCC 11.3.0, Open MPI 4.1.8 and CUDA 12.4.131 (sm_86). These observed values supersede the planning examples below.
 
 ## Algorithm and scoring coverage
 
@@ -114,6 +116,6 @@ Add the new CPU/GPU environment in a separate paragraph sourced from new probes.
 
 > We used [GPT-6.1 sol] to [help code, create tables and beautify assignment]. We are responsible for the content and quality of the submitted work.
 
-The report must use the newly validated Vanda results. Its final performance tables and conclusions remain pending those measurements.
+The report uses the locally verified Vanda results. The online paper and final delivery PDF are updated together.
 
-Assuming the original 13 November deadline: 2–5 November implementation/probes/preflights; 5–9 November formal jobs; 9–11 November statistics/report; 12 November audit, trilingual review and packaging. Queue availability and real CUDA acceptance remain external dependencies. Multi-GPU scaling and additional GPU optimization variants are outside this campaign.
+The six-study campaign is complete and locally verified. The report now uses these Vanda results; the remaining submission steps are review and packaging. The assignment deadline is 13 November 2026. Multi-GPU scaling and additional GPU optimization variants remain outside this campaign.
