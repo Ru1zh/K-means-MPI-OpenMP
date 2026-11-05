@@ -1,34 +1,36 @@
-# Lloyd K-means with MPI + OpenMP + CUDA
+# Lloyd K-means: MPI + OpenMP + CUDA
 
-**Vanda campaign completed:** six audited studies contain **275 ordinary measurements and 75 independent profiles**, including 256-core MPI and one NVIDIA A40 GPU. See the [results](analysis/rubric-202611/RESULTS.md), [experiment guide](RUBRIC_GUIDE.md) and [report figures](analysis/rubric-202611/FIGURE_GUIDE.md).
+[English](README.md) · [简体中文](README.zh-CN.md) · [한국어](README.ko.md)
 
-[English](README.md) | [简体中文](README.zh-CN.md) | [한국어](README.ko.md)
+C++17 implementation of Lloyd K-means, with serial, MPI, MPI+OpenMP and optional CUDA versions. The algorithm is implemented directly; no clustering library is used. Vanda experiments cover 256 CPU cores and one NVIDIA A40.
 
-C++17 implementations of Lloyd K-means for comparing process and thread parallelism. Includes a serial reference, MPI/OpenMP variants, numerical tests, and benchmark scripts. The clustering algorithm is implemented directly without a clustering library.
+## Versions
 
-| Variant | Local accumulation | Purpose |
-| --- | --- | --- |
-| V0 | Serial | Numerical reference and single-core baseline |
-| V1 | Serial within each MPI process | Pure MPI baseline |
-| V2 | OpenMP shared atomic updates | Measure contention |
-| V3 | OpenMP thread-private buffers, then merge | Reduce synchronization inside the sample loop |
-| V4 | Optional CUDA assignment and two-stage statistics reduction | Single-GPU FP64 comparison (P=1) |
-
-CUDA is optional; `make all` remains CPU-only. Build V4 with `make cuda CUDA_HOME="$CUDA_HOME" CUDA_ARCH="$CUDA_ARCH"`, then run `build/kmeans_cuda --variant v4`. See the November guide for GPU preflight and architecture selection.
-
-The parallel executable supports Allreduce and Reduce + Bcast for global centroid updates.
+| Version | Implementation |
+|---|---|
+| V0 | Serial reference |
+| V1 | Serial local work per MPI rank |
+| V2 | OpenMP shared atomic accumulation |
+| V3 | OpenMP thread-private buffers followed by a merge |
+| V4 | CUDA assignment and two-stage statistics merge; P=1, one GPU |
 
 ## Build
 
-Requirements: a C++17 compiler and Make; MPI-3+ and OpenMP for the parallel executable; Python 3.8+ for tests and scripts. Build tests, benchmarks and offline audits use only the Python standard library. Optional report plotting uses Python 3.9+ and Matplotlib; see `requirements.txt`.
-
-On Linux/HPC, load matching compiler and MPI modules, then run:
+Requires C++17 and Make; MPI/OpenMP for parallel CPU execution; compatible CUDA toolkit and nvcc for V4. CPU builds do not require CUDA. Load matching compiler/MPI modules on HPC.
 
 ```sh
 make all CXX=g++ MPICXX=mpicxx
+# Serial only:
+make serial
 ```
 
-Use `make serial` for a serial-only build. On macOS with Apple Clang, Homebrew Open MPI, and libomp:
+Optional GPU build: 86 matches the measured A40; select the architecture of your actual GPU.
+
+```sh
+make cuda CUDA_HOME="$CUDA_HOME" CUDA_ARCH=86
+```
+
+macOS with Homebrew Open MPI and libomp:
 
 ```sh
 make all CXX=clang++ MPICXX="$(brew --prefix open-mpi)/bin/mpicxx" \
@@ -36,150 +38,97 @@ make all CXX=clang++ MPICXX="$(brew --prefix open-mpi)/bin/mpicxx" \
   OMPLIBS="-L$(brew --prefix libomp)/lib -lomp"
 ```
 
-Default flags: `-O3 -std=c++17 -Wall -Wextra -Wpedantic`. Use the same underlying compiler and floating-point options for both executables. Add `-B` when changing compilers or flags to force a rebuild.
+## Run
 
-## Quick start
-
-Run the hand-checkable example:
+Synthetic data are generated in memory; no download or examples folder is needed.
 
 ```sh
-./build/kmeans_serial --input examples/tiny.txt --k 2 \
-  --init-indices 0,2 --iterations 1 --dump --trace
-```
-
-Expected final centroids: `[0, 1, 10, 11]` (row-major), counts: `[2, 2]`, labels: `[0, 0, 1, 1]`, and SSE: `4`.
-
-Run generated data with two MPI processes and two threads per process:
-
-```sh
+./build/kmeans_serial --n 10000 --d 8 --k 16 --iterations 20
 mpiexec -n 2 ./build/kmeans_mpi --n 10000 --d 8 --k 16 \
-  --variant v3 --threads 2 --comm allreduce --iterations 50
+  --variant v3 --threads 2 --comm allreduce --iterations 20
+./build/kmeans_cuda --variant v4 --n 10000 --d 8 --k 16 --iterations 20
 ```
 
-Use `--variant v1 --threads 1` for pure MPI, `--variant v2` for atomic accumulation, or `--comm reduce-bcast` for the alternative communication strategy. Each successful run writes one JSON object to stdout; errors go to stderr.
+Use `--variant v1 --threads 1` for pure MPI, `v2` for atomic accumulation, and `--comm reduce-bcast` for the alternative collective strategy. Run an executable with `--help` for all options. Successful runs write one JSON object to stdout.
 
-## Data and options
+## Data and correctness
 
-Synthetic data is determined by the seed and global sample indices, so changing the process count preserves the dataset within the same build environment. No download is needed. The generator uses 16 Gaussian groups, independently of the requested number of clusters `K`. `--skew` assigns 90% of samples to one generating group.
+The seeded generator chooses one of 16 equally likely Gaussian groups, with centers in (-10,10) and standard-normal noise (sigma=1, Box-Muller). Values depend on global sample index and coordinate, so MPI partitioning preserves the input within the same build environment. Initial centroids are K distinct sampled points; generating groups and solver K are independent. Formal runs use seed=42 and disable `--skew`.
 
-For external data, use a whitespace-separated text file with `N D` on the first line and exactly `N * D` finite coordinates afterward. Remove IDs and labels, and apply scaling consistently beforehand. File dimensions override `--n` and `--d`. Rank 0 reads the file and distributes it with Scatterv; the total number of coordinates must fit in `INT_MAX`.
-
-| Option | Default / meaning |
-| --- | --- |
-| `--n`, `--d`, `--k` | `10000`, `8`, `16`; require `N,D > 0` and `1 <= K <= N` |
-| `--seed` | `42`; data generation and initial sample selection |
-| `--input FILE` | Prepared text dataset |
-| `--init-indices 0,2,...` | `K` distinct global sample indices |
-| `--variant` | Serial: `v0`; parallel: `v1`, `v2`, or `v3` (default) |
-| `--comm` | `allreduce` (default) or `reduce-bcast` |
-| `--threads` | `1`; V0 and V1 require one thread |
-| `--mode` | `fixed` (default) or `converge` |
-| `--iterations` | `50` in fixed mode; maximum `300` in convergence mode |
-| `--tol` | `1e-6`; relative maximum centroid displacement |
-| `--warmup` | `0`; warmup iterations followed by a reset to the initial state |
-| `--skew` | Enable the skewed synthetic distribution |
-| `--dump` | Include initial/final centroids and final labels |
-| `--trace` | Per-iteration SSE, counts, and updated centroids |
-| `--profile` | Accumulation, merge, reduction, update, and broadcast times |
-
-Run either executable with `--help` for the CLI summary. `--dump` and `--trace` require both `N` and `K * D` to be at most `100000`.
-
-Distances and sums use `double`; counts use 64-bit integers. Exact ties select the lowest cluster index; empty clusters retain their previous centroids. Final labels, counts, and SSE are recomputed using the final centroids. Compare floating-point results with tolerances. Gaussian generation can differ across math libraries; use `data_fingerprint` to check inputs.
+FP64 coordinates/sums; 64-bit counts. Exact ties select the lowest cluster index; empty clusters keep their previous centroids. Final labels/counts/SSE are recomputed using final centers. `--warmup` restores the initial state before timing. External text input is optional: first line `N D`, followed by exactly N×D finite coordinates.
 
 ## Tests
+
+Python 3.8+ standard library only. Eleven CPU/MPI test methods cover hand-computed results, ties, empty clusters, unequal/empty partitions, convergence, warmup reset and phase timers; three optional GPU methods compare CPU/GPU outputs and verify failure without a device. Run MPI/GPU tests inside suitable allocations; skipped GPU tests do not constitute GPU validation.
 
 ```sh
 make test
 make test-mpi
+make test-cuda CUDA_HOME="$CUDA_HOME" CUDA_ARCH=86
 ```
 
-`make test` runs serial and experiment-tool tests, skipping MPI integration cases. `make test-mpi` also runs real MPI/OpenMP comparisons, including uneven partitions, processes without samples, both communication strategies, and distributed error handling.
+## HPC experiments
 
-To customize the launcher:
+The launcher targets Linux + PBS + Open MPI with shared project storage. Confirm queues, modules, walltime and physical-core allocation first. Put site-specific module commands in an external environment script. GPU jobs also need `CUDA_HOME` and `CUDA_ARCH`. The commands below generate six PBS files; inspect them before submitting.
 
 ```sh
-TEST_MPI=1 MPIEXEC=mpiexec MPIEXEC_FLAGS='--bind-to none' \
-  python3 -m unittest discover -s tests -v
+python3 scripts/rubric_campaign.py --suite all --cores-per-node 64 --dry-run
+python3 hpc/rubric_jobs.py --cores-per-node 64 \
+  --cpu-queue CPU_QUEUE --gpu-queue GPU_QUEUE \
+  --walltime 08:00:00 --output artifacts/rubric-jobs
+for suite in serial strong weak hybrid communication gpu; do
+  qsub -v KMEANS_ENV_FILE=/absolute/path/kmeans-env.sh "artifacts/rubric-jobs/$suite.pbs"
+done
 ```
 
-On HPC, run parallel tests and benchmarks inside a scheduler allocation with enough cores. `--threads` sets the team size; the program disables dynamic teams and checks the actual thread count.
+Replace queue placeholders and the absolute environment-file path. Set C to the largest usable power of two in {8,16,32,64}; multi-node jobs request 256/C distinct nodes. Each job stages sources, builds, checks numerical results and actual affinity, then runs five shuffled repeats. Errors, overlapping CPU cores, insufficient resources or GPU failures stop the job; there is no CPU fallback. New results go to a fresh `artifacts/rubric-202611/<suite>.<job-id>/` directory.
 
-## Benchmarks
+## Formal matrix
 
-Preview the workload, then run and summarize a strong-scaling experiment:
+All runs use FP64, seed=42, 20 timed iterations, two warmup iterations/reset and five repeats; D=K=32 unless varied. Total: 275 ordinary observations and 75 independent profiles.
 
-```sh
-python3 scripts/benchmark.py --suite smoke --processes 1,2 --threads 2 \
-  --n 10000 --d 8 --k 16 --iterations 5 --dry-run
+| Study | Configuration | Ordinary / diagnostic records |
+|---|---|---:|
+| Serial | V0: N={100k,200k,500k,1M,2M,4M}; D,K={8,16,32,64,128}, one factor at a time; base N=1M,D=K=32 | 70 / 0 |
+| Strong | V0 baseline + V1/P={1,2,4,8,16,32,64,128,256}; N=4M | 50 / 15 |
+| Weak | V1, same P; N=100k×P | 45 / 15 |
+| Hybrid | V2/V3 at P×T={256×1,128×2,64×4,32×8}, plus V1/256 | 45 / 10 |
+| Communication | V1/P={C,256}, Allreduce vs Reduce+Bcast | 20 / 20 |
+| GPU | N={100k,1M,4M}; V0/CPU1, V3/CPU8, V4/GPU1 in one job | 45 / 15 |
 
-python3 scripts/benchmark.py --suite strong --processes 1,2,4 --threads 1 \
-  --n 100000 --d 32 --k 32 --repeats 5 --output results/strong.jsonl
-python3 scripts/summarize.py results/strong.jsonl --output results/strong.csv
-```
+## Timing and interpretation
 
-| Suite | Comparison |
-| --- | --- |
-| `serial` | V0 only |
-| `smoke` | V0–V3, plus both communication strategies for V3 |
-| `strong` | Fixed problem size, varying processes, with a V0 baseline |
-| `weak` | Fixed samples per process: total `N = --n * P` |
-| `hybrid` | Fixed `--total-cores`; set `T = total_cores / P` for valid process counts |
-| `threads` | V2 versus V3 with the same process/thread configuration |
-| `communication` | Allreduce versus Reduce + Bcast for V3 |
-| `sensitivity` | Vary one of N, D, or K at a time |
+`kernel_seconds` is the maximum rank-local complete loop; `total_seconds` additionally includes data preparation, initialization, GPU setup/upload, warmup and final evaluation, excluding MPI initialization and external launch. Use `--profile` only in independent diagnostic runs. CPU attribution retains one actual critical rank’s complete phase vector; GPU device intervals use CUDA events. MPI intervals include waiting.
 
-Defaults: 50 measured iterations, 2 warmup iterations, and 5 repetitions per configuration. Configuration order is shuffled within each repetition. `--launcher` accepts a tokenized command with `{p}` and `{t}` placeholders; no shell is used.
+Strong speedup uses same-job V0 or V1/P=1, with efficiency S/P. Weak efficiency is T1/TP and throughput speedup P×T1/TP. Hybrid comparisons fix P×T=256. Compare only within matched jobs; error ranges are five-repeat observed min-max, not confidence intervals.
 
-`--serial-launcher` sets an optional command prefix for V0, such as `taskset --cpu-list 40` on Linux. Choose the CPU from the scheduler allocation and verify affinity before timing. Both launchers are recorded in raw results and CSV grouping; older results without a serial launcher remain readable.
+<!-- LOCAL_ARCHIVE_START -->
 
-For example, with Open MPI and an appropriate core allocation:
+## Local results and figures
 
-```sh
-export OMP_PLACES=cores
-export OMP_PROC_BIND=close
-python3 scripts/benchmark.py --suite communication --processes 1,2 --threads 2 \
-  --launcher 'mpiexec -n {p} --map-by slot:PE={t} --bind-to core --report-bindings' \
-  --output results/communication.jsonl
-```
+This section applies to the complete local repository only and is omitted from the source-only submission. The six Vanda jobs were verified on 5 November 2026: Intel Xeon Platinum 8452Y, C=64 active physical cores/node, up to four nodes, one A40; GCC 11.3.0, Open MPI 4.1.8, CUDA 12.4.131.
 
-Check the launcher's binding report and record the allocation. Environment variables alone do not establish affinity. Avoid oversubscription for performance measurements. Scheduler and module setup depend on the cluster.
+Strong scaling reaches 130.75× V0-relative speedup and 51.07% efficiency at 256 cores; weak efficiency is 57.37%. V3 avoids V2’s accumulation penalty, while its 1.04% loop advantage over pure MPI has overlapping ranges. GPU loop speedups over CPU1 are 11.05–13.00×; end-to-end gains are smaller.
 
-Raw JSONL and stderr logs are saved separately. CSV summaries report median/minimum/maximum kernel times, repetition counts, and SSE ranges. Existing output files are never overwritten; overlapping measurements are rejected.
+| Figure | Content | PNG | PDF | SVG |
+|---|---|---|---|---|
+| 1 | Serial N/D/K scaling | [PNG](analysis/rubric-202611/paper-figures/figure-1-serial.png) | [PDF](analysis/rubric-202611/paper-figures/figure-1-serial.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-1-serial.svg) |
+| 2 | MPI strong scaling | [PNG](analysis/rubric-202611/paper-figures/figure-2-strong.png) | [PDF](analysis/rubric-202611/paper-figures/figure-2-strong.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-2-strong.svg) |
+| 3 | MPI weak scaling | [PNG](analysis/rubric-202611/paper-figures/figure-3-weak.png) | [PDF](analysis/rubric-202611/paper-figures/figure-3-weak.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-3-weak.svg) |
+| 4 | Communication and phase shares | [PNG](analysis/rubric-202611/paper-figures/figure-4-communication.png) | [PDF](analysis/rubric-202611/paper-figures/figure-4-communication.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-4-communication.svg) |
+| 5 | Fixed-256-core MPI+OpenMP | [PNG](analysis/rubric-202611/paper-figures/figure-5-hybrid.png) | [PDF](analysis/rubric-202611/paper-figures/figure-5-hybrid.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-5-hybrid.svg) |
+| 6 | Same-job CPU/GPU comparison | [PNG](analysis/rubric-202611/paper-figures/figure-6-gpu.png) | [PDF](analysis/rubric-202611/paper-figures/figure-6-gpu.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-6-gpu.svg) |
 
-## Timing and reproducibility
-
-- `kernel_seconds` measures Lloyd iterations after warmup/reset and a starting barrier, taking the maximum elapsed time across processes.
-- Data preparation, initialization, warmup, and final evaluation have separate timers. `total_seconds` starts after MPI initialization and ends after final evaluation; `launch_seconds` measures the external command.
-- `--trace` and `--profile` add diagnostic work and are rejected by the benchmark summary. Separate phase maxima cannot be added to reconstruct total time.
-- Strong-scaling speedup is `t_serial / t_parallel`; efficiency is `speedup / (P * T)`. Weak-scaling efficiency compares `P=1` and `P>1` with fixed samples and threads per process. Use matching workloads and environments.
-
-Benchmark records include hostnames, executable paths, launch commands, and job IDs. New working results, external datasets, local notes, credentials, caches and build outputs are ignored. Reviewed Vanda evidence is retained under `benchmarks/rubric-202611/`.
-
-## Vanda experiments and report figures
-
-The six suites cover serial size scaling, pure MPI strong/weak scaling, communication, fixed-256-core MPI+OpenMP and a same-job CPU/GPU comparison. The retained campaign contains 275 ordinary measurements plus 75 independent diagnostic records. Correctness preflight and actual worker affinity checks precede formal timing.
-
-See [the execution guide](RUBRIC_GUIDE.md), [evidence index](benchmarks/rubric-202611/CAMPAIGN_INDEX.md) and [figure guide](analysis/rubric-202611/FIGURE_GUIDE.md). Figures are generated only after the complete evidence passes audit; each new figure is exported as PNG, PDF and SVG.
+[Exact statistics](analysis/rubric-202611/verified-20261105/statistics.csv) · [Independent phase summaries](analysis/rubric-202611/verified-20261105/profiles.csv)
 
 ```sh
-python3 scripts/reproduce_rubric.py --status
 python3 scripts/reproduce_rubric.py --verify-only
-python3 scripts/reproduce_rubric.py --tables-only --output artifacts/rubric-tables
 python3 -m pip install -r requirements.txt
-python3 scripts/reproduce_rubric.py --output artifacts/rubric-figures
+python3 analysis/rubric-202611/render_paper_figures.py \
+  --from-tables analysis/rubric-202611/verified-20261105 \
+  --output artifacts/report-figures-new
 ```
 
-## Repository layout
+`--verify-only` requires the complete sealed local raw archive; do not reseal or edit measured snapshots. Aggregate-table redraw requires the local CSVs and is not a raw-evidence audit. Time, problem-size and numerical CPU-count axes are logarithmic; phase percentages and efficiency remain linear. See the report for full discussion. OpenAI Codex assisted with implementation and documentation.
 
-```text
-src/          C++ algorithm, data generation, MPI runtime, JSON output
-scripts/      Benchmark runner and CSV summary
-tests/       Numerical and experiment-tool tests
-examples/     Small input with a hand-computed expected result
-hpc/          PBS scripts, placement tools and standalone package builder
-benchmarks/   Vanda evidence, source snapshots and audit records
-analysis/     Report figures, exact tables, captions and reproduction guide
-Makefile      Serial/parallel builds and tests
-```
-
-OpenAI Codex assisted with the implementation, tests and documentation. Performance conclusions require verified measurements on Vanda.
+<!-- LOCAL_ARCHIVE_END -->

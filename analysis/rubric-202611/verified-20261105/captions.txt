@@ -1,13 +1,13 @@
-Figure 1. Serial V0: three one-factor sweeps. Lower panels normalize by I*N*K*D; initialization and final evaluation are excluded.
+Figure 1. V0 one-factor N/D/K sweeps; lower panels normalize time by I*N*K*D. Problem-size and time axes are logarithmic.
 
-Figure 2. V1/T=1 strong scaling to 256 actual physical CPU cores. Baselines are the same-job V0 and V1/P=1 medians. Dotted vertical line marks C.
+Figure 2. V1 strong scaling at fixed N=4,000,000 and D=K=32. Both same-job baselines are labeled; dotted C=64 marks one-node capacity. Rank count and runtime axes are logarithmic.
 
-Figure 3. Weak scaling fixes 100,000 samples per rank. Weak efficiency is T1/TP; throughput speedup is P*T1/TP. This is not strong-scaling serial speedup.
+Figure 3. V1 weak scaling with N=100,000P and D=K=32: loop time, T1/TP efficiency, and P*T1/TP throughput speedup. Rank count and runtime axes are logarithmic.
 
-Figure 4. Allreduce and Reduce+Bcast at P=C and P=256. Diagnostic stacks retain all phases from one actual critical rank of the median-kernel diagnostic sample; MPI includes waiting.
+Figure 4. Same-job Allreduce (AR) and Reduce+Bcast (RB) at P=64 and 256. Left: ordinary medians, with logarithmic rank-count and time axes. Right: phase percentages of one actual critical-rank loop from each representative diagnostic; Other is loop time outside the named timers. MPI phases include waiting.
 
-Figure 5. V2 and V3 at P*T=256, with a separately repeated same-job V1/256 baseline. Lower time-change percentages are better.
+Figure 5. V2/V3 layouts at P*T=256, N=4,000,000. Left: median loop time on a logarithmic axis and same-job V1/256 reference. Right: percentage time change with logarithmic threads per rank; lower is better.
 
-Figure 6. FP64 V0/CPU1, V3/CPU8 and V4/GPU1 measured in one GPU job. Internal end-to-end time includes generation, setup, warmup, loop and final evaluation; MPI initialization/process launch are excluded.
+Figure 6. Same GPU-job V0/CPU1, V3/CPU8 and V4/GPU1 at three N values, D=K=32. Left: synchronized complete-loop time. Right: internal end-to-end time. Both N and time axes are logarithmic.
 
-Ordinary points/bars use five repeats: median and observed min–max, not confidence intervals. Diagnostic samples are separate.
+Ordinary points/bars use five-repeat medians and observed min-max, not confidence intervals. Diagnostics are independent and excluded from ordinary statistics.

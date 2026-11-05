@@ -44,8 +44,16 @@ def read_runs(folder):
             if not (job / name).is_file() or not (job / name).stat().st_size:
                 raise ValueError('Missing PBS script/output: ' + name)
         expected_sources = preflight['source_manifest']
-        if source_manifest(job / 'source') != expected_sources or source_manifest() != expected_sources:
-            raise ValueError('Preserved or delivered source differs from measurement source')
+        if source_manifest(job / 'source') != expected_sources:
+            raise ValueError('Preserved source differs from measurement source')
+        # Post-experiment test cleanup and reporting edits must not rewrite the
+        # measured snapshots. Still require the delivered computational sources
+        # and build recipe to match the actual measured implementation exactly.
+        current_sources = source_manifest()
+        computational = {'Makefile'} | {name for name in expected_sources if name.startswith('src/')}
+        if computational != ({'Makefile'} | {name for name in current_sources if name.startswith('src/')}) or any(
+                current_sources.get(name) != expected_sources[name] for name in computational):
+            raise ValueError('Delivered computational source differs from measurement source')
         required = {'PBS_NODEFILE', 'job.txt', 'queues.txt', 'mpi-launcher.txt',
                     'host-compiler.txt', 'mpi-flags.txt', 'inventory.txt', 'allocation.json', 'ties.txt'}
         if preflight['gpu_verified']:

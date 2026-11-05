@@ -1,34 +1,36 @@
 # MPI + OpenMP + CUDA를 이용한 Lloyd K-means
 
-**Vanda 실험 완료:** 여섯 연구의 **일반 측정 275개와 독립 단계 진단 75개**가 검증되었으며, 256코어 MPI와 NVIDIA A40 GPU 1개를 포함합니다. [결과](analysis/rubric-202611/RESULTS.ko.md), [실험 안내](RUBRIC_GUIDE.ko.md), [보고서 그림](analysis/rubric-202611/FIGURE_GUIDE.ko.md)을 참고하세요.
+[English](README.md) · [简体中文](README.zh-CN.md) · [한국어](README.ko.md)
 
-[English](README.md) | [简体中文](README.zh-CN.md) | [한국어](README.ko.md)
+Lloyd K-means를 C++17로 직접 구현한 프로젝트입니다. 직렬, MPI, MPI+OpenMP 및 선택적 CUDA 버전을 포함하며 군집화 라이브러리는 사용하지 않습니다. Vanda에서 CPU 256코어와 NVIDIA A40 GPU 1개를 측정했습니다.
 
-프로세스 병렬화와 스레드 병렬화 방식을 비교하기 위한 C++17 기반 Lloyd K-means 구현입니다. 직렬 기준 구현, MPI/OpenMP 병렬 버전, 수치 검증 테스트와 벤치마크 스크립트를 제공합니다. 군집화 라이브러리를 사용하지 않고 알고리즘을 직접 구현했습니다.
+## 버전
 
-| 버전 | 프로세스 내부 누적 방식 | 용도 |
-| --- | --- | --- |
-| V0 | 직렬 처리 | 수치 검증 및 단일 코어 성능 기준 |
-| V1 | 각 MPI 프로세스 내부에서 직렬 처리 | 순수 MPI 기준 구현 |
-| V2 | OpenMP 공유 배열에 원자적 갱신 | 스레드 간 경합 측정 |
-| V3 | OpenMP 스레드별 전용 버퍼에 누적한 뒤 병합 | 샘플 처리 루프 내부의 동기화 감소 |
-| V4 | 선택적 CUDA 할당 및 2단계 통계 병합 | 단일 GPU FP64 비교 (P=1) |
-
-CUDA는 선택 사항이며 기본 `make all`은 CPU만 빌드합니다. `make cuda CUDA_HOME="$CUDA_HOME" CUDA_ARCH="$CUDA_ARCH"` 후 `build/kmeans_cuda --variant v4`를 실행합니다. 사전 검증과 실제 아키텍처 선택은 11월 안내를 참고하세요.
-
-병렬 실행 파일은 전역 중심점 갱신을 위해 Allreduce와 Reduce + Bcast를 모두 지원합니다.
+| 버전 | 구현 |
+|---|---|
+| V0 | 직렬 기준 구현 |
+| V1 | MPI rank 내부의 직렬 계산 |
+| V2 | OpenMP 공유 배열의 원자적 누적 |
+| V3 | OpenMP 스레드별 전용 버퍼와 병합 |
+| V4 | CUDA 할당 및 2단계 통계 병합; P=1, GPU 1개 |
 
 ## 빌드
 
-C++17 컴파일러와 Make가 필요합니다. 병렬 실행 파일에는 MPI-3+와 OpenMP가 필요하며, 테스트와 스크립트에는 Python 3.8+가 필요합니다. 테스트, 벤치마크와 오프라인 검증은 Python 표준 라이브러리만 사용합니다. 선택적인 보고서 그래프 생성에는 Python 3.9+와 Matplotlib이 필요하며, 의존성은 `requirements.txt`에 있습니다.
-
-Linux/HPC에서는 서로 호환되는 컴파일러와 MPI 모듈을 불러온 뒤 실행합니다.
+C++17 컴파일러와 Make가 필요합니다. 병렬 CPU 버전에는 MPI/OpenMP, V4에는 호환되는 CUDA toolkit과 nvcc가 필요합니다. 기본 CPU 빌드에는 CUDA가 필요하지 않습니다. HPC에서 호환되는 컴파일러와 MPI 모듈을 먼저 불러오세요.
 
 ```sh
 make all CXX=g++ MPICXX=mpicxx
+# Serial only:
+make serial
 ```
 
-직렬 실행 파일만 빌드하려면 `make serial`을 사용합니다. macOS에서 Apple Clang, Homebrew Open MPI와 libomp를 사용하는 경우:
+선택적 GPU 빌드: 86은 측정한 A40에 해당합니다. 다른 GPU는 실제 아키텍처를 지정하세요.
+
+```sh
+make cuda CUDA_HOME="$CUDA_HOME" CUDA_ARCH=86
+```
+
+Homebrew Open MPI와 libomp를 사용하는 macOS:
 
 ```sh
 make all CXX=clang++ MPICXX="$(brew --prefix open-mpi)/bin/mpicxx" \
@@ -36,150 +38,97 @@ make all CXX=clang++ MPICXX="$(brew --prefix open-mpi)/bin/mpicxx" \
   OMPLIBS="-L$(brew --prefix libomp)/lib -lomp"
 ```
 
-기본 컴파일 옵션은 `-O3 -std=c++17 -Wall -Wextra -Wpedantic`입니다. 직렬 및 병렬 실행 파일에는 동일한 기반 컴파일러와 부동소수점 옵션을 사용하세요. 컴파일러나 옵션을 바꿀 때는 `-B`를 추가하여 강제로 다시 빌드합니다.
+## 실행
 
-## 빠른 시작
-
-손으로 결과를 확인할 수 있는 예제를 실행합니다.
+합성 데이터는 메모리에서 생성하므로 다운로드나 examples 폴더가 필요하지 않습니다.
 
 ```sh
-./build/kmeans_serial --input examples/tiny.txt --k 2 \
-  --init-indices 0,2 --iterations 1 --dump --trace
-```
-
-예상 최종 중심점은 행 우선으로 나열했을 때 `[0, 1, 10, 11]`, 군집별 샘플 수는 `[2, 2]`, 레이블은 `[0, 0, 1, 1]`, SSE는 `4`입니다.
-
-MPI 프로세스 2개와 프로세스당 스레드 2개로 합성 데이터를 처리합니다.
-
-```sh
+./build/kmeans_serial --n 10000 --d 8 --k 16 --iterations 20
 mpiexec -n 2 ./build/kmeans_mpi --n 10000 --d 8 --k 16 \
-  --variant v3 --threads 2 --comm allreduce --iterations 50
+  --variant v3 --threads 2 --comm allreduce --iterations 20
+./build/kmeans_cuda --variant v4 --n 10000 --d 8 --k 16 --iterations 20
 ```
 
-순수 MPI는 `--variant v1 --threads 1`, 원자적 누적은 `--variant v2`를 사용합니다. 통신 방식을 바꾸려면 `--comm reduce-bcast`를 지정합니다. 실행이 성공하면 stdout에 JSON 객체 하나를 출력하고, 오류는 stderr에 출력합니다.
+순수 MPI는 `--variant v1 --threads 1`, 원자적 누적은 `v2`를 사용합니다. `--comm reduce-bcast`로 통신 방식을 바꿉니다. 전체 옵션은 실행 파일의 `--help`를 참고하세요. 성공한 실행은 stdout에 JSON 객체 하나를 출력합니다.
 
-## 데이터와 옵션
+## 데이터와 정확성
 
-합성 데이터는 시드와 전역 샘플 인덱스로 결정되므로, 동일한 빌드 환경에서는 프로세스 수를 바꾸어도 같은 데이터가 생성됩니다. 별도의 다운로드는 필요하지 않습니다. 생성기는 알고리즘의 군집 수 `K`와 독립적으로 16개의 가우시안 그룹을 사용합니다. `--skew`를 지정하면 전체 생성 확률의 90%를 하나의 그룹에 배정합니다.
+생성기는 확률이 같은 가우시안 그룹 16개 중 하나를 선택합니다. 중심 좌표는 (-10,10)에서 생성하고 표준정규 잡음(sigma=1, Box-Muller)을 더합니다. 난수는 시드, 전역 샘플 인덱스와 좌표로 결정되어 같은 빌드 환경에서는 MPI 분할을 바꾸어도 입력이 같습니다. 초기 중심은 서로 다른 표본 K개이며 생성 그룹 수와 알고리즘 K는 독립적입니다. 정식 실행은 seed=42를 사용하고 `--skew`를 끕니다.
 
-외부 데이터는 첫 줄에 `N D`가 있고, 그 뒤에 정확히 `N * D`개의 유한한 좌표 값이 있는 공백 구분 텍스트 파일로 준비합니다. ID와 레이블을 제거하고, 필요한 스케일링은 실행 전에 일관되게 적용하세요. 파일에 기록된 차원이 `--n`, `--d`보다 우선합니다. Rank 0이 파일을 읽고 Scatterv로 분배하며, 전체 좌표 값의 개수는 `INT_MAX`를 넘을 수 없습니다.
-
-| 옵션 | 기본값 및 의미 |
-| --- | --- |
-| `--n`, `--d`, `--k` | `10000`, `8`, `16`; `N,D > 0`, `1 <= K <= N`이어야 함 |
-| `--seed` | `42`; 데이터 생성 및 초기 샘플 선택에 사용 |
-| `--input FILE` | 준비된 텍스트 데이터셋 |
-| `--init-indices 0,2,...` | 서로 다른 전역 샘플 인덱스 `K`개 |
-| `--variant` | 직렬: `v0`; 병렬: `v1`, `v2` 또는 기본값 `v3` |
-| `--comm` | 기본값 `allreduce` 또는 `reduce-bcast` |
-| `--threads` | `1`; V0와 V1은 스레드 1개만 사용 가능 |
-| `--mode` | 기본값 `fixed` 또는 `converge` |
-| `--iterations` | 고정 반복 모드는 기본 50회, 수렴 모드는 기본 최대 300회 |
-| `--tol` | `1e-6`; 중심점의 상대 최대 이동량에 대한 허용오차 |
-| `--warmup` | `0`; 지정한 횟수만큼 워밍업한 후 초기 상태로 복원 |
-| `--skew` | 편향된 합성 데이터 분포 사용 |
-| `--dump` | 초기 및 최종 중심점과 최종 레이블 출력 |
-| `--trace` | 반복별 SSE, 군집별 샘플 수, 갱신된 중심점 기록 |
-| `--profile` | 누적, 병합, 리덕션, 갱신, 브로드캐스트의 단계별 시간 기록 |
-
-각 실행 파일에 `--help`를 지정하면 옵션 요약을 볼 수 있습니다. `--dump`와 `--trace`를 사용할 때는 `N`과 `K * D`가 모두 `100000` 이하여야 합니다.
-
-거리와 좌표 합에는 `double`, 샘플 수에는 64비트 정수를 사용합니다. 거리가 정확히 같으면 가장 작은 군집 인덱스를 선택하며, 빈 군집은 이전 중심점을 유지합니다. 최종 레이블, 군집별 샘플 수와 SSE는 최종 중심점을 기준으로 다시 계산합니다. 부동소수점 결과는 허용오차를 두고 비교하세요. 수학 라이브러리가 다르면 가우시안 생성 결과의 마지막 비트가 달라질 수 있으므로, `data_fingerprint`로 입력을 확인합니다.
+좌표와 합은 FP64, 개수는 64비트 정수입니다. 동률이면 가장 작은 군집 인덱스를 선택하고 빈 군집은 이전 중심을 유지합니다. 최종 레이블, 개수와 SSE는 최종 중심으로 다시 계산합니다. `--warmup` 후 초기 상태를 복원하고 측정합니다. 선택적 텍스트 입력은 첫 줄 `N D` 뒤에 유한 좌표 N×D개가 있어야 합니다.
 
 ## 테스트
+
+Python 3.8+ 표준 라이브러리만 필요합니다. CPU/MPI 메서드 11개는 손계산 결과, 동률, 빈 군집, 불균등/빈 분할, 수렴, 워밍업 복원과 단계 타이머를 검사합니다. 선택적 GPU 메서드 3개는 CPU/GPU 수치 일치와 장치가 없을 때의 실패를 확인합니다. MPI/GPU 테스트는 적절한 자원 할당에서 실행하세요. GPU 테스트를 건너뛰는 것은 GPU 검증 통과가 아닙니다.
 
 ```sh
 make test
 make test-mpi
+make test-cuda CUDA_HOME="$CUDA_HOME" CUDA_ARCH=86
 ```
 
-`make test`는 직렬 구현과 실험 도구를 테스트하며 MPI 통합 테스트는 건너뜁니다. `make test-mpi`는 실제 MPI/OpenMP 비교도 수행합니다. 여기에는 균등하게 나누어지지 않는 분할, 샘플이 없는 프로세스, 두 통신 방식, 분산 실행 중 오류 처리가 포함됩니다.
+## HPC 실험
 
-실행기를 직접 지정하려면 다음과 같이 실행합니다.
+실행기는 Linux + PBS + Open MPI와 노드 간 공유 프로젝트 저장소를 전제로 합니다. 큐, 모듈, 제한 시간과 물리 코어 할당을 확인하세요. 사이트별 모듈 명령은 외부 환경 스크립트에 두고 GPU 작업에는 `CUDA_HOME`, `CUDA_ARCH`도 설정합니다. 아래 명령은 PBS 파일 6개를 생성합니다. 검토한 뒤 제출하세요.
 
 ```sh
-TEST_MPI=1 MPIEXEC=mpiexec MPIEXEC_FLAGS='--bind-to none' \
-  python3 -m unittest discover -s tests -v
+python3 scripts/rubric_campaign.py --suite all --cores-per-node 64 --dry-run
+python3 hpc/rubric_jobs.py --cores-per-node 64 \
+  --cpu-queue CPU_QUEUE --gpu-queue GPU_QUEUE \
+  --walltime 08:00:00 --output artifacts/rubric-jobs
+for suite in serial strong weak hybrid communication gpu; do
+  qsub -v KMEANS_ENV_FILE=/absolute/path/kmeans-env.sh "artifacts/rubric-jobs/$suite.pbs"
+done
 ```
 
-HPC에서는 스케줄러를 통해 충분한 코어를 할당받은 환경에서 병렬 테스트와 벤치마크를 실행하세요. `--threads`로 스레드 수를 지정합니다. 프로그램은 동적 스레드 수 조정을 비활성화하고 실제 스레드 수를 확인합니다.
+큐 자리표시자와 환경 파일의 절대 경로를 바꾸세요. C는 {8,16,32,64} 중 사용 가능한 최댓값이며 다중 노드 작업은 서로 다른 노드 256/C개를 요청합니다. 각 작업은 소스 스냅샷, 빌드, 수치/실제 바인딩 검사를 거친 뒤 무작위 순서로 5회 측정합니다. CPU 중복, 자원 부족, GPU 오류 시 중단하며 CPU로 자동 전환하지 않습니다. 새 결과는 독립적인 `artifacts/rubric-202611/<suite>.<job-id>/`에 저장됩니다.
 
-## 벤치마크
+## 정식 실험 구성
 
-실행 구성을 먼저 확인한 다음 강한 확장성 실험을 수행하고 결과를 요약합니다.
+FP64, seed=42, 측정 반복 20회, 워밍업 2회 후 초기 상태 복원, 구성별 5회를 사용합니다. 크기 변경 외에는 D=K=32입니다. 일반 기록 275개와 독립 진단 75개입니다.
 
-```sh
-python3 scripts/benchmark.py --suite smoke --processes 1,2 --threads 2 \
-  --n 10000 --d 8 --k 16 --iterations 5 --dry-run
+| 연구 | 구성 | 일반 / 진단 기록 |
+|---|---|---:|
+| 직렬 | V0: N={100k,200k,500k,1M,2M,4M}; D,K={8,16,32,64,128}, 한 변수씩 변경; 기준 N=1M,D=K=32 | 70 / 0 |
+| 강한 확장 | V0 기준 + V1/P={1,2,4,8,16,32,64,128,256}; N=4M | 50 / 15 |
+| 약한 확장 | V1, 같은 P; N=100k×P | 45 / 15 |
+| 혼합 | V2/V3, P×T={256×1,128×2,64×4,32×8}, V1/256 기준 포함 | 45 / 10 |
+| 통신 | V1/P={C,256}, Allreduce와 Reduce+Bcast 비교 | 20 / 20 |
+| GPU | N={100k,1M,4M}; 같은 작업에서 V0/CPU1, V3/CPU8, V4/GPU1 | 45 / 15 |
 
-python3 scripts/benchmark.py --suite strong --processes 1,2,4 --threads 1 \
-  --n 100000 --d 32 --k 32 --repeats 5 --output results/strong.jsonl
-python3 scripts/summarize.py results/strong.jsonl --output results/strong.csv
-```
+## 시간 측정과 해석
 
-| 실험 모음 | 비교 내용 |
-| --- | --- |
-| `serial` | V0만 실행 |
-| `smoke` | V0–V3 및 V3의 두 통신 방식 |
-| `strong` | 문제 크기를 고정하고 프로세스 수를 변경하며 V0 기준값 포함 |
-| `weak` | 프로세스당 샘플 수 고정; 전체 `N = --n * P` |
-| `hybrid` | `--total-cores`를 고정하고 유효한 프로세스 수에 대해 `T = total_cores / P` 설정 |
-| `threads` | 동일한 프로세스 및 스레드 구성에서 V2와 V3 비교 |
-| `communication` | V3에서 Allreduce와 Reduce + Bcast 비교 |
-| `sensitivity` | N, D, K 중 하나씩 변경 |
+`kernel_seconds`는 가장 느린 rank의 전체 반복 루프 시간입니다. `total_seconds`는 데이터 준비, 초기화, GPU 설정/업로드, 워밍업과 최종 평가를 포함하고 MPI 초기화 및 외부 실행 시작은 제외합니다. `--profile`은 독립 진단에만 사용합니다. CPU 단계 분석은 실제 critical rank 하나의 전체 벡터를 사용하며 GPU 구간은 CUDA events로 측정합니다. MPI 시간에는 대기도 포함됩니다.
 
-기본값은 측정 반복 50회, 워밍업 반복 2회, 구성별 실행 5회입니다. 각 실행 차수마다 구성 순서를 무작위로 섞습니다. `--launcher`에는 `{p}`와 `{t}` 자리표시자를 포함한 명령을 지정할 수 있습니다. 명령은 토큰으로 나누어 실행하며 셸을 사용하지 않습니다.
+강한 확장 가속비는 같은 작업의 V0 또는 V1/P=1 기준이며 효율은 S/P입니다. 약한 확장 효율은 T1/TP, 처리량 가속비는 P×T1/TP입니다. 혼합 비교는 P×T=256을 고정합니다. 대응되는 작업 안에서만 비교하고 오차 범위는 5회 관측 최솟값–최댓값이며 신뢰구간이 아닙니다.
 
-`--serial-launcher`는 V0 실행 명령 앞에 붙일 선택적 명령을 지정합니다. Linux에서는 `taskset --cpu-list 40` 등을 사용할 수 있습니다. CPU 번호는 스케줄러가 할당한 범위에서 선택하고, 측정 전에 CPU 어피니티를 확인하세요. 두 실행기 설정 모두 원시 결과에 기록되며 CSV 그룹화에도 사용됩니다. 직렬 실행기 필드가 없는 이전 결과도 읽을 수 있습니다.
+<!-- LOCAL_ARCHIVE_START -->
 
-Open MPI에서 필요한 코어를 할당받은 경우 다음과 같이 바인딩할 수 있습니다.
+## 로컬 결과와 그림
 
-```sh
-export OMP_PLACES=cores
-export OMP_PROC_BIND=close
-python3 scripts/benchmark.py --suite communication --processes 1,2 --threads 2 \
-  --launcher 'mpiexec -n {p} --map-by slot:PE={t} --bind-to core --report-bindings' \
-  --output results/communication.jsonl
-```
+이 절은 전체 로컬 저장소에만 해당하며 소스 제출본에서는 생략합니다. 여섯 Vanda 작업은 2026년 11월 5일 검증되었습니다. Intel Xeon Platinum 8452Y, 노드당 실제 물리 코어 C=64, 최대 4노드 및 A40 1개; GCC 11.3.0, Open MPI 4.1.8, CUDA 12.4.131입니다.
 
-실행기의 바인딩 보고서를 확인하고 자원 할당 내역을 기록하세요. 환경변수 설정만으로 실제 CPU 어피니티가 적용되었다고 판단할 수는 없습니다. 성능 측정에서는 할당된 코어 수보다 많은 실행 스레드를 사용하는 오버서브스크립션을 피하세요. 스케줄러와 모듈 설정은 클러스터마다 다릅니다.
+256코어 강한 확장은 V0 대비 가속비 130.75배, 효율 51.07%이며 약한 확장 효율은 57.37%입니다. V3는 V2의 누적 비용을 줄였지만 순수 MPI 대비 1.04%의 루프 차이는 관측 범위가 겹칩니다. GPU 루프는 CPU1 대비 11.05–13.00배 빠르지만 전체 실행 이득은 더 작습니다.
 
-원시 JSONL과 stderr 로그는 별도로 저장됩니다. CSV 요약에는 커널 실행 시간의 중앙값, 최솟값, 최댓값, 반복 실행 횟수와 SSE 범위가 포함됩니다. 기존 출력 파일은 덮어쓰지 않으며, 중복된 측정 기록은 거부합니다.
+| 그림 | 내용 | PNG | PDF | SVG |
+|---|---|---|---|---|
+| 1 | 직렬 N/D/K 확장 | [PNG](analysis/rubric-202611/paper-figures/figure-1-serial.png) | [PDF](analysis/rubric-202611/paper-figures/figure-1-serial.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-1-serial.svg) |
+| 2 | MPI 강한 확장 | [PNG](analysis/rubric-202611/paper-figures/figure-2-strong.png) | [PDF](analysis/rubric-202611/paper-figures/figure-2-strong.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-2-strong.svg) |
+| 3 | MPI 약한 확장 | [PNG](analysis/rubric-202611/paper-figures/figure-3-weak.png) | [PDF](analysis/rubric-202611/paper-figures/figure-3-weak.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-3-weak.svg) |
+| 4 | 통신 및 단계 비율 | [PNG](analysis/rubric-202611/paper-figures/figure-4-communication.png) | [PDF](analysis/rubric-202611/paper-figures/figure-4-communication.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-4-communication.svg) |
+| 5 | 고정 256코어 MPI+OpenMP | [PNG](analysis/rubric-202611/paper-figures/figure-5-hybrid.png) | [PDF](analysis/rubric-202611/paper-figures/figure-5-hybrid.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-5-hybrid.svg) |
+| 6 | 같은 작업의 CPU/GPU 비교 | [PNG](analysis/rubric-202611/paper-figures/figure-6-gpu.png) | [PDF](analysis/rubric-202611/paper-figures/figure-6-gpu.pdf) | [SVG](analysis/rubric-202611/paper-figures/figure-6-gpu.svg) |
 
-## 시간 측정과 재현성
-
-- `kernel_seconds`는 워밍업, 초기 상태 복원과 시작 배리어 이후의 Lloyd 반복을 측정하며, 프로세스별 경과 시간의 최댓값을 사용합니다.
-- 데이터 준비, 초기화, 워밍업, 최종 평가에는 별도 타이머가 있습니다. `total_seconds`는 MPI 초기화 후부터 최종 평가 종료까지, `launch_seconds`는 외부 명령의 실행 시간을 측정합니다.
-- `--trace`와 `--profile`은 진단 작업을 추가하므로 벤치마크 요약에서 제외됩니다. 각 단계의 최대 시간을 더해 전체 시간을 재구성할 수는 없습니다.
-- 강한 확장성의 속도 향상은 `t_serial / t_parallel`, 효율은 `speedup / (P * T)`입니다. 약한 확장성의 효율은 프로세스당 샘플 수와 스레드 수를 고정한 상태에서 `P=1`과 `P>1`을 비교합니다. 작업량과 환경이 일치하는 실행끼리 비교하세요.
-
-실험 기록에는 호스트 이름, 실행 파일 경로, 명령 및 작업 ID가 포함됩니다. 작업 중 결과, 외부 데이터, 로컬 메모, 인증 정보, 캐시 및 빌드 파일은 무시하며 검토한 Vanda 증거는 `benchmarks/rubric-202611/`에 보관합니다.
-
-## Vanda 실험과 보고서 그림
-
-순차 크기 분석, 순수 MPI 강/약 확장, 통신 비교, 고정 256코어 MPI+OpenMP, 동일 작업 CPU/GPU 비교를 수행합니다. 목표는 일반 시간 측정 275개와 독립 진단 75개입니다. 정식 시간 측정 전에 수치 정확성과 실제 작업 스레드 배치를 검증합니다.
-
-[실행 안내](RUBRIC_GUIDE.ko.md), [증거 색인](benchmarks/rubric-202611/CAMPAIGN_INDEX.ko.md), [그림 안내](analysis/rubric-202611/FIGURE_GUIDE.ko.md)를 참고하세요. 전체 증거 감사 후 새 그림을 만들며 각각 PNG, PDF, SVG로 내보냅니다.
+[정확한 통계](analysis/rubric-202611/verified-20261105/statistics.csv) · [독립 단계 요약](analysis/rubric-202611/verified-20261105/profiles.csv)
 
 ```sh
-python3 scripts/reproduce_rubric.py --status
 python3 scripts/reproduce_rubric.py --verify-only
-python3 scripts/reproduce_rubric.py --tables-only --output artifacts/rubric-tables
 python3 -m pip install -r requirements.txt
-python3 scripts/reproduce_rubric.py --output artifacts/rubric-figures
+python3 analysis/rubric-202611/render_paper_figures.py \
+  --from-tables analysis/rubric-202611/verified-20261105 \
+  --output artifacts/report-figures-new
 ```
 
-## 디렉터리 구조
+`--verify-only`에는 봉인된 전체 로컬 원시 보관본이 필요합니다. 다시 봉인하거나 실측 스냅샷을 수정하지 마세요. 집계 CSV 기반 그림 재생성은 로컬 표가 필요하며 원시 증거 감사가 아닙니다. 시간, 문제 크기와 수치형 CPU 개수 축은 로그 눈금이며 단계 비율과 효율은 선형입니다. 자세한 논의는 보고서에 있습니다. OpenAI Codex가 구현과 문서 작성을 도왔습니다.
 
-```text
-src/          C++ 알고리즘, 데이터 생성, MPI 런타임, JSON 출력
-scripts/      벤치마크 실행 및 CSV 요약
-tests/        수치 검증 및 실험 도구 테스트
-examples/     손으로 예상 결과를 확인할 수 있는 작은 입력
-hpc/          PBS 스크립트, CPU 배치 도구 및 독립 패키지 생성기
-benchmarks/   Vanda 원본 증거, 소스 스냅샷과 검증 기록
-analysis/     보고서 그래프, 정확한 통계표, 그림 설명 및 재현 안내
-Makefile      직렬 및 병렬 빌드와 테스트
-```
-
-구현, 테스트와 문서 작성에 OpenAI Codex의 도움을 받았습니다. 성능 결론에는 검증된 Vanda 측정이 필요합니다.
+<!-- LOCAL_ARCHIVE_END -->

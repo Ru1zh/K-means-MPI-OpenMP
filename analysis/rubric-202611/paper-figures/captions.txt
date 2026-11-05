@@ -1,0 +1,13 @@
+Figure 1. V0 one-factor N/D/K sweeps; lower panels normalize time by I*N*K*D. Problem-size and time axes are logarithmic.
+
+Figure 2. V1 strong scaling at fixed N=4,000,000 and D=K=32. Both same-job baselines are labeled; dotted C=64 marks one-node capacity. Rank count and runtime axes are logarithmic.
+
+Figure 3. V1 weak scaling with N=100,000P and D=K=32: loop time, T1/TP efficiency, and P*T1/TP throughput speedup. Rank count and runtime axes are logarithmic.
+
+Figure 4. Same-job Allreduce (AR) and Reduce+Bcast (RB) at P=64 and 256. Left: ordinary medians, with logarithmic rank-count and time axes. Right: phase percentages of one actual critical-rank loop from each representative diagnostic; Other is loop time outside the named timers. MPI phases include waiting.
+
+Figure 5. V2/V3 layouts at P*T=256, N=4,000,000. Left: median loop time on a logarithmic axis and same-job V1/256 reference. Right: percentage time change with logarithmic threads per rank; lower is better.
+
+Figure 6. Same GPU-job V0/CPU1, V3/CPU8 and V4/GPU1 at three N values, D=K=32. Left: synchronized complete-loop time. Right: internal end-to-end time. Both N and time axes are logarithmic.
+
+Ordinary points/bars use five-repeat medians and observed min-max, not confidence intervals. Diagnostics are independent and excluded from ordinary statistics.

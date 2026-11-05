@@ -60,7 +60,11 @@ def matrix(suite, c=64, profile=False):
 
 
 def source_manifest(root=ROOT):
-    files = [root / 'Makefile', root / 'requirements.txt']
+    files = [root / 'Makefile']
+    # Plot dependencies belong to the full local analysis repository, not the
+    # source-only submission. Preserve them in historical snapshots when present.
+    if (root / 'requirements.txt').is_file():
+        files.append(root / 'requirements.txt')
     for directory, patterns in [('src', ('*.hpp', '*.cpp', '*.cu')), ('scripts', ('*.py',)),
                                 ('hpc', ('rubric*',)), ('tests', ('*.py',))]:
         for pattern in patterns:
