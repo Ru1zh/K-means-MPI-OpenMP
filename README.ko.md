@@ -20,7 +20,7 @@ C++17 컴파일러와 Make가 필요합니다. 병렬 CPU 버전에는 MPI/OpenM
 
 ```sh
 git clone https://github.com/Ru1zh/K-means-MPI-OpenMP.git
-cd Code
+cd K-means-MPI-OpenMP
 make all CXX=g++ MPICXX=mpicxx
 # Serial only:
 make serial

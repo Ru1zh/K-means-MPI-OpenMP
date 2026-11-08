@@ -20,7 +20,7 @@ Requires C++17 and Make; MPI/OpenMP for parallel CPU execution; compatible CUDA 
 
 ```sh
 git clone https://github.com/Ru1zh/K-means-MPI-OpenMP.git
-cd Code
+cd K-means-MPI-OpenMP
 make all CXX=g++ MPICXX=mpicxx
 # Serial only:
 make serial
