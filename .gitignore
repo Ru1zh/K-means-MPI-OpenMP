@@ -17,6 +17,11 @@
 *.csv
 *.tsv
 *.log
+*.stdout
+*.stderr
+*.out
+*.err
+*.zip
 *.o[0-9]*
 *.e[0-9]*
 
@@ -49,20 +54,10 @@ Thumbs.db
 *.swo
 *~
 
-# Reviewed evidence for the independent November campaign.
-!/benchmarks/rubric-202611/runs/**/*.jsonl
-!/benchmarks/rubric-202611/runs/**/*.csv
-!/benchmarks/rubric-202611/runs/**/*.tsv
-!/benchmarks/rubric-202611/runs/**/*.log
-!/benchmarks/rubric-202611/runs/**/*.o[0-9]*
-!/benchmarks/rubric-202611/runs/**/*.e[0-9]*
+# Raw job evidence and frozen snapshots stay local, outside the GitHub code submission.
+/benchmarks/rubric-202611/runs/
+/benchmarks/rubric-202611/evidence-sha256.json
+
+# Keep reviewed aggregate tables alongside report figures.
 !/analysis/rubric-202611/*.csv
-
-# Exact reviewed tables in nested Vanda analysis directories.
 !/analysis/rubric-202611/**/*.csv
-
-# These 26 generated files are part of the sealed Vanda evidence checksums.
-# Preserve them only within immutable job snapshots; local caches stay ignored.
-!/benchmarks/rubric-202611/runs/**/source/**/__pycache__/
-!/benchmarks/rubric-202611/runs/**/source/**/__pycache__/*.pyc
-!/benchmarks/rubric-202611/runs/gpu.1519803.stdct-mgmt-02/source/build/cuda_backend.o

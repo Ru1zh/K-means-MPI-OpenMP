@@ -19,6 +19,8 @@
 需要 C++17 编译器和 Make；并行 CPU 版本需要 MPI/OpenMP；V4 需要兼容的 CUDA toolkit 和 nvcc。默认 CPU 构建不依赖 CUDA。在 HPC 上先加载匹配的编译器与 MPI 模块。
 
 ```sh
+git clone https://github.com/Ru1zh/K-means-MPI-OpenMP.git
+cd Code
 make all CXX=g++ MPICXX=mpicxx
 # Serial only:
 make serial
@@ -106,7 +108,7 @@ done
 
 ## 本地结果与图表
 
-本节仅适用于完整本地仓库，源码提交包会省略本节。六组 Vanda 实验于 2026 年 11 月 5 日通过验证：Intel Xeon Platinum 8452Y，每节点实际使用 C=64 个物理核，最多四节点，单块 A40；GCC 11.3.0、Open MPI 4.1.8、CUDA 12.4.131。
+GitHub 仓库保留源码、汇总表和报告图表。原始作业日志与历史源码快照已从当前 Git 追踪中移除，仅在本地保留；原始证据审计命令需要该本地归档。六组 Vanda 实验于 2026 年 11 月 5 日通过验证：Intel Xeon Platinum 8452Y，每节点实际使用 C=64 个物理核，最多四节点，单块 A40；GCC 11.3.0、Open MPI 4.1.8、CUDA 12.4.131。
 
 256 核强扩展相对 V0 加速 130.75 倍、效率 51.07%；弱扩展效率为 57.37%。V3 避免了 V2 的累加开销，但相对纯 MPI 的 1.04% 循环优势仍有范围重叠。GPU 循环相对 CPU1 加速 11.05–13.00 倍，端到端收益较小。
 

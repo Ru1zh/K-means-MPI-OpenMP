@@ -1,3 +1,0 @@
-$ mpicxx --showme
-g++ -I/cm/shared/apps/openmpi4/gcc/4.1.8/include -L/cm/shared/apps/openmpi4/gcc/4.1.8/lib -L/cm/shared/apps/hwloc2/current/lib -Wl,-rpath -Wl,/cm/shared/apps/openmpi4/gcc/4.1.8/lib -Wl,-rpath -Wl,/cm/shared/apps/hwloc2/current/lib -Wl,--enable-new-dtags -lmpi
-

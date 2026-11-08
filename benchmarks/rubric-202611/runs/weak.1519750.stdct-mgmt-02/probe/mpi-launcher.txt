@@ -1,5 +1,0 @@
-$ mpiexec --version
-mpiexec (OpenRTE) 4.1.8
-
-Report bugs to http://www.open-mpi.org/community/help/
-

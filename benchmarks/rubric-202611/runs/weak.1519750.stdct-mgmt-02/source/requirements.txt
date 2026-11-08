@@ -1,3 +1,0 @@
-# Optional report figure generation; builds, tests and audits use no Python packages.
-# Matplotlib 3.9.4 requires Python 3.9+.
-matplotlib==3.9.4

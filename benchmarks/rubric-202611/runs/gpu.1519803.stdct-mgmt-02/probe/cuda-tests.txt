@@ -1,8 +1,0 @@
-test_generated_and_warmup_reset (test_cuda.CudaTests) ... ok
-test_no_visible_device_fails (test_cuda.CudaTests) ... ok
-test_ties_empty_clusters_and_identical_points (test_cuda.CudaTests) ... ok
-
-----------------------------------------------------------------------
-Ran 3 tests in 4.000s
-
-OK

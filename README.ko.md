@@ -19,6 +19,8 @@ Lloyd K-means를 C++17로 직접 구현한 프로젝트입니다. 직렬, MPI, M
 C++17 컴파일러와 Make가 필요합니다. 병렬 CPU 버전에는 MPI/OpenMP, V4에는 호환되는 CUDA toolkit과 nvcc가 필요합니다. 기본 CPU 빌드에는 CUDA가 필요하지 않습니다. HPC에서 호환되는 컴파일러와 MPI 모듈을 먼저 불러오세요.
 
 ```sh
+git clone https://github.com/Ru1zh/K-means-MPI-OpenMP.git
+cd Code
 make all CXX=g++ MPICXX=mpicxx
 # Serial only:
 make serial
@@ -106,7 +108,7 @@ FP64, seed=42, 측정 반복 20회, 워밍업 2회 후 초기 상태 복원, 구
 
 ## 로컬 결과와 그림
 
-이 절은 전체 로컬 저장소에만 해당하며 소스 제출본에서는 생략합니다. 여섯 Vanda 작업은 2026년 11월 5일 검증되었습니다. Intel Xeon Platinum 8452Y, 노드당 실제 물리 코어 C=64, 최대 4노드 및 A40 1개; GCC 11.3.0, Open MPI 4.1.8, CUDA 12.4.131입니다.
+GitHub 저장소에는 코드, 집계표와 보고서 그림을 포함합니다. 원시 작업 로그와 과거 소스 스냅샷은 현재 Git 추적에서 제외하고 로컬에 보관하며 원시 증거 감사 명령에는 해당 로컬 보관본이 필요합니다. 여섯 Vanda 작업은 2026년 11월 5일 검증되었습니다. Intel Xeon Platinum 8452Y, 노드당 실제 물리 코어 C=64, 최대 4노드 및 A40 1개; GCC 11.3.0, Open MPI 4.1.8, CUDA 12.4.131입니다.
 
 256코어 강한 확장은 V0 대비 가속비 130.75배, 효율 51.07%이며 약한 확장 효율은 57.37%입니다. V3는 V2의 누적 비용을 줄였지만 순수 MPI 대비 1.04%의 루프 차이는 관측 범위가 겹칩니다. GPU 루프는 CPU1 대비 11.05–13.00배 빠르지만 전체 실행 이득은 더 작습니다.
 

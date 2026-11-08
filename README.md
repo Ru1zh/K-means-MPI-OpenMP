@@ -19,6 +19,8 @@ C++17 implementation of Lloyd K-means, with serial, MPI, MPI+OpenMP and optional
 Requires C++17 and Make; MPI/OpenMP for parallel CPU execution; compatible CUDA toolkit and nvcc for V4. CPU builds do not require CUDA. Load matching compiler/MPI modules on HPC.
 
 ```sh
+git clone https://github.com/Ru1zh/K-means-MPI-OpenMP.git
+cd Code
 make all CXX=g++ MPICXX=mpicxx
 # Serial only:
 make serial
@@ -106,7 +108,7 @@ Strong speedup uses same-job V0 or V1/P=1, with efficiency S/P. Weak efficiency 
 
 ## Local results and figures
 
-This section applies to the complete local repository only and is omitted from the source-only submission. The six Vanda jobs were verified on 5 November 2026: Intel Xeon Platinum 8452Y, C=64 active physical cores/node, up to four nodes, one A40; GCC 11.3.0, Open MPI 4.1.8, CUDA 12.4.131.
+The GitHub repository includes code, aggregate tables and report figures. Raw job logs and frozen snapshots are excluded from the current Git tree and retained locally; raw-evidence audit commands require that local archive. The six Vanda jobs were verified on 5 November 2026: Intel Xeon Platinum 8452Y, C=64 active physical cores/node, up to four nodes, one A40; GCC 11.3.0, Open MPI 4.1.8, CUDA 12.4.131.
 
 Strong scaling reaches 130.75× V0-relative speedup and 51.07% efficiency at 256 cores; weak efficiency is 57.37%. V3 avoids V2’s accumulation penalty, while its 1.04% loop advantage over pure MPI has overlapping ranges. GPU loop speedups over CPU1 are 11.05–13.00×; end-to-end gains are smaller.
 
