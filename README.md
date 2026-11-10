@@ -1,7 +1,5 @@
 # Lloyd K-means: MPI + OpenMP + CUDA
 
-[English](README.md) · [简体中文](README.zh-CN.md) · [한국어](README.ko.md)
-
 C++17 implementation of Lloyd K-means, with serial, MPI, MPI+OpenMP and optional CUDA versions. The algorithm is implemented directly; no clustering library is used. Vanda experiments cover 256 CPU cores and one NVIDIA A40.
 
 ## Versions
